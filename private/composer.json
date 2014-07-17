@@ -1,0 +1,27 @@
+{
+  "name" : "phalcon/pcan",
+  "description" : "This is a fork of vokura + blog, using phalcon",
+  "version" : "1.0.1",
+  "require" : {
+    "php" : ">=5.3.9",
+    "ext-phalcon" : ">=1.2.5",
+    "swiftmailer/swiftmailer" : "5.0.*",
+    "phalcon/incubator": "dev-master",
+    
+    "amazonwebservices/aws-sdk-for-php" : "~1.0"
+    },
+ 
+    "require-dev": {
+        "phpunit/phpunit": "3.7.*"
+    },
+ 
+
+  "authors" : [ {
+    "name" : "Michael Rynn",
+    "email" : "michaelrynn@optusnet.com.au"
+  } ],
+  "keywords" : ["phalcon", "framework", "sample app" ],
+  "type" : "library",
+  "license" : "BSD-3",
+  "homepage" : "http://www.phalconphp.com"
+}
