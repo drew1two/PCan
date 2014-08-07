@@ -1,72 +1,51 @@
-{{ content() }}
-<?php
-require_once __DIR__ . '/../../../vendor/google/recaptcha-php/recaptchalib.php';
-?>
-<div align="center">
+<?php use \Pcan\Captcha\Recaptcha; ?>
 
+{{ content() }}
+
+<div align="center">
 	{{ form('class': 'form-search') }}
 
-		<div align="left">
-			<h2>Sign Up</h2>
-		</div>
-
-		<table class="signup">
+		<table class="table table-condensed">
                     <thead>
-                        <tr>
-                            <th></th><th style='width:350px'></th>                              
-                        </tr>
+                        <tr><th colspan='2' class='centerCell'><label>Sign Up</label></th></tr>
 
                     </thead>
 			<tr>
-				<td align="right">{{ form.label('name') }}</td>
-				<td>
+				<td class='rightCell'>{{ form.label('name') }}</td>
+				<td class='leftCell'>
 					{{ form.render('name') }}
 					{{ form.messages('name') }}
 				</td>
 			</tr>
 			<tr>
-				<td align="right">{{ form.label('email') }}</td>
-				<td>
+				<td  class='rightCell'>{{ form.label('email') }}</td>
+				<td class='leftCell'>
 					{{ form.render('email') }}
 					{{ form.messages('email') }}
 				</td>
 			</tr>
 			<tr>
-				<td align="right">{{ form.label('password') }}</td>
-				<td>
+				<td  class='rightCell'>{{ form.label('password') }}</td>
+				<td class='leftCell'>
 					{{ form.render('password') }}
 					{{ form.messages('password') }}
 				</td>
 			</tr>
 			<tr>
-				<td align="right">{{ form.label('confirmPassword') }}</td>
-				<td>
+				<td class='rightCell'>{{ form.label('confirmPassword') }}</td>
+				<td class='leftCell'>
 					{{ form.render('confirmPassword') }}
 					{{ form.messages('confirmPassword') }}
 				</td>
 			</tr>
-			<tr>
-				<td align="right"></td>
-				<td>
-					{{ form.render('terms') }} {{ form.label('terms') }}
-					{{ form.messages('terms') }}
-				</td>
-			</tr>
-                        <?php
-                            $config = Phalcon\DI::getDefault()->get('config');
-                            if ($config->application->signupCaptcha)
-                            {
-                                echo "<tr><td align='right' colspan='2'>";
-                                echo recaptcha_get_html($config->application->captchaPublic);
-                                echo "</td></tr>";
-                                if (!$config->application->loginCaptcha)
-                                {
-                                echo "<tr><td colspan='2'>Captcha helps discourage robots." 
-                                . " <br/>This inconvenience is regretted. Login is Captcha-free."
-                                . " <br/>Signup requires email confirmation</td></tr>";             
-                                }
-                            }
-                        ?>
+			
+          <?php
+             $config = Phalcon\DI::getDefault()->get('config');
+             if ($config->application->recaptcha)
+             {
+                 echo Recaptcha::htmlCaptcha($config);      
+             }
+         ?>
 			<tr>
 				<td colspan='2' >{{ form.render('Sign Up') }}</td>
 			</tr>

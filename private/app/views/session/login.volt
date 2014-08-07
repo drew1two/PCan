@@ -1,8 +1,6 @@
+<?php use \Pcan\Captcha\Recaptcha; ?>
+
 {{ content() }}
-<?php
-// https://www.google.com/recaptcha/admin#site/318137110
-    require_once __DIR__ . '/../../../vendor/google/recaptcha-php/recaptchalib.php';
-?>
 
 <div align="center" class="well">
     {{ form('class': 'form-search') }}
@@ -20,14 +18,13 @@
                 <td><label for="password">Password</label></td>
                 <td>{{ form.render('password') }}</td>    
             </tr>
-            <?php
-            $config = Phalcon\DI::getDefault()->get('config');
-            if ($config->application->loginCaptcha) {
-                echo "<tr><td colspan='2'>";
-                echo recaptcha_get_html($config->application->captchaPublic);
-                echo "</tr></td>";
-            }
-            ?> 
+          <?php
+             $config = Phalcon\DI::getDefault()->get('config');
+             if ($config->application->loginCaptcha)
+             {
+                 echo Recaptcha::htmlCaptcha($config);      
+             }
+         ?>
         </tbody>
     </table>
 

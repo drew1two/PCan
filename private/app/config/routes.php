@@ -4,12 +4,41 @@
  */
 $router = new Phalcon\Mvc\Router(false);
 
+
+
+$router->add('/:controller/:action', array(
+    'controller' => 1,
+    'action' => 2,
+));
+
+
 $router->add('/', array(
     'controller' => 'index',
     'action' => 'index',
-    'redirect' => true,
 ));
 
+
+
+$router->add('/index',array(
+    'controller' => 'index',
+    'action' => 'index',
+));
+        
+$router->add('/contact/', array(
+        'controller' => 'about',
+        'action' => 'contact'
+));
+
+
+$router->add('/article/{name}',array(
+   'controller' => 'title',
+   'action' => 'byTitle'
+));
+
+$router->add('/event/{name}', array(
+   'controller' => 'event',
+   'action' => 'byTitle'    
+));
 $router->add('/confirm/{code}/{email}', array(
     'controller' => 'user_control',
     'action' => 'confirmEmail'
@@ -48,18 +77,14 @@ $router->add('/read/article/{id}', array(
     'action' => 'article',
 ));
 
-$router->add('/contact/', array(
-        'controller' => 'about',
-        'action' => 'contact'
-));
 
-$router->add('/:controller/:action', array(
-    'controller' => 1,
-    'action' => 2,
-));
-
+// catch all
 $router->notFound(array(
     'controller' => "index",
     'action' => "route404", 
 ));
+
+
+
+
 return $router;

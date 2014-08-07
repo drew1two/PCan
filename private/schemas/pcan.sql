@@ -102,7 +102,7 @@ CREATE TABLE IF NOT EXISTS `pcan`.`profiles` (
   `name` VARCHAR(64) NOT NULL,
   `active` CHAR(1) NOT NULL,
   PRIMARY KEY (`id`),
-  INDEX `active` (`active` ASC))
+  INDEX `IX_NAME` (`name` ASC))
 ENGINE = InnoDB
 AUTO_INCREMENT = 4
 DEFAULT CHARACTER SET = utf8;
@@ -216,19 +216,22 @@ DROP TABLE IF EXISTS `pcan`.`blog` ;
 
 CREATE TABLE IF NOT EXISTS `pcan`.`blog` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `title` VARCHAR(144) NOT NULL,
-  `article` TEXT NULL DEFAULT NULL,
-  `title_clean` VARCHAR(144) NOT NULL,
-  `author_id` INT UNSIGNED NULL,
   `date_published` DATETIME NOT NULL,
-  `featured` TINYINT(1) NOT NULL DEFAULT 0,
+  `date_updated` DATETIME NOT NULL,
+  `title` VARCHAR(144) NOT NULL,
+  `title_clean` VARCHAR(144) NOT NULL,
+  `article` TEXT NULL DEFAULT NULL,
+  `author_id` INT UNSIGNED NULL,
   `enabled` TINYINT(1) NOT NULL DEFAULT 0,
-  `comments_enabled` TINYINT(1) NOT NULL DEFAULT 1,
-  `views` INT NOT NULL DEFAULT 0,
+  `comments` TINYINT(1) NOT NULL DEFAULT 1,
+  `featured` TINYINT(1) NOT NULL DEFAULT 0,
+  `bundle_type` VARCHAR(24) NULL,
+  `bundle_id` INT UNSIGNED NULL,
   PRIMARY KEY (`id`),
   INDEX `index3` (`title_clean` ASC),
   INDEX `fk_blog_post_1_idx` (`author_id` ASC),
   INDEX `title1` (`title` ASC),
+  UNIQUE INDEX `title_clean_UNIQUE` (`title_clean` ASC),
   CONSTRAINT `fk_blog_post_1`
     FOREIGN KEY (`author_id`)
     REFERENCES `pcan`.`users` (`id`)
@@ -349,16 +352,86 @@ ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table `pcan`.`table1`
+-- Table `pcan`.`meta`
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS `pcan`.`table1` ;
+DROP TABLE IF EXISTS `pcan`.`meta` ;
 
-CREATE TABLE IF NOT EXISTS `pcan`.`table1` (
-  `idtable1` INT NOT NULL,
-  `imageId` VARCHAR(45) NULL,
-  `blogId` VARCHAR(45) NULL,
-  PRIMARY KEY (`idtable1`))
-ENGINE = InnoDB;
+CREATE TABLE IF NOT EXISTS `pcan`.`meta` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `attr_value` VARCHAR(30) NOT NULL,
+  `attr_name` VARCHAR(15) NOT NULL,
+  `content_type` VARCHAR(45) NULL,
+  `auto_filled` TINYINT(1) NULL DEFAULT 0,
+  PRIMARY KEY (`id`),
+  UNIQUE INDEX `id_meta_UNIQUE` (`id` ASC),
+  UNIQUE INDEX `keyvalue_UNIQUE` (`attr_value` ASC))
+ENGINE = InnoDB
+AUTO_INCREMENT = 1;
+
+
+-- -----------------------------------------------------
+-- Table `pcan`.`blog_meta`
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS `pcan`.`blog_meta` ;
+
+CREATE TABLE IF NOT EXISTS `pcan`.`blog_meta` (
+  `blog_id` INT UNSIGNED NOT NULL,
+  `meta_id` INT UNSIGNED NOT NULL,
+  `content` VARCHAR(200) NULL,
+  PRIMARY KEY (`blog_id`, `meta_id`),
+  INDEX `meta_id_idx` (`meta_id` ASC),
+  CONSTRAINT `blog_id`
+    FOREIGN KEY (`blog_id`)
+    REFERENCES `pcan`.`blog` (`id`)
+    ON DELETE CASCADE
+    ON UPDATE NO ACTION,
+  CONSTRAINT `meta_id`
+    FOREIGN KEY (`meta_id`)
+    REFERENCES `pcan`.`meta` (`id`)
+    ON DELETE CASCADE
+    ON UPDATE NO ACTION)
+ENGINE = InnoDB
+COMMENT = 'add meta tags to blog pages';
+
+
+-- -----------------------------------------------------
+-- Table `pcan`.`event`
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS `pcan`.`event` ;
+
+CREATE TABLE IF NOT EXISTS `pcan`.`event` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `fromTime` DATETIME NOT NULL,
+  `toTime` DATETIME NULL,
+  `blogId` INT UNSIGNED NOT NULL,
+  `enabled` TINYINT(1) NULL,
+  PRIMARY KEY (`id`),
+  INDEX `fk_event_blog_idx` (`blogId` ASC),
+  CONSTRAINT `fk_event_blog`
+    FOREIGN KEY (`blogId`)
+    REFERENCES `pcan`.`blog` (`id`)
+    ON DELETE CASCADE
+    ON UPDATE NO ACTION)
+ENGINE = InnoDB
+AUTO_INCREMENT = 1;
+
+
+-- -----------------------------------------------------
+-- Table `pcan`.`contact`
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS `pcan`.`contact` ;
+
+CREATE TABLE IF NOT EXISTS `pcan`.`contact` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `name` VARCHAR(125) NULL,
+  `telephone` VARCHAR(15) NULL,
+  `email` VARCHAR(45) NULL,
+  `sendDate` DATETIME NULL,
+  `body` TEXT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE INDEX `id_UNIQUE` (`id` ASC))
+ENGINE = InnoDB
+AUTO_INCREMENT = 1;
 
 
 SET SQL_MODE=@OLD_SQL_MODE;
@@ -366,24 +439,14 @@ SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
 
 -- -----------------------------------------------------
--- Data for table `pcan`.`users`
--- -----------------------------------------------------
-START TRANSACTION;
-USE `pcan`;
-INSERT INTO `pcan`.`users` (`id`, `name`, `email`, `password`, `mustChangePassword`, `profilesId`, `banned`, `suspended`, `active`) VALUES (NULL, 'Michael Rynn', 'michael.rynn@parracan.org', NULL, NULL, NULL, NULL, NULL, 'Y');
-
-COMMIT;
-
-
--- -----------------------------------------------------
 -- Data for table `pcan`.`profiles`
 -- -----------------------------------------------------
 START TRANSACTION;
 USE `pcan`;
-INSERT INTO `pcan`.`profiles` (`id`, `name`, `active`) VALUES (1, 'Administrators', 'Y');
-INSERT INTO `pcan`.`profiles` (`id`, `name`, `active`) VALUES (2, 'Users', 'Y');
-INSERT INTO `pcan`.`profiles` (`id`, `name`, `active`) VALUES (3, 'Read-Only', 'Y');
-INSERT INTO `pcan`.`profiles` (`id`, `name`, `active`) VALUES (4, 'Editors', 'Y');
+INSERT INTO `pcan`.`profiles` (`id`, `name`, `active`) VALUES (1, 'Administrator', 'Y');
+INSERT INTO `pcan`.`profiles` (`id`, `name`, `active`) VALUES (2, 'Member', 'Y');
+INSERT INTO `pcan`.`profiles` (`id`, `name`, `active`) VALUES (3, 'Public', 'Y');
+INSERT INTO `pcan`.`profiles` (`id`, `name`, `active`) VALUES (4, 'Editor', 'Y');
 
 COMMIT;
 

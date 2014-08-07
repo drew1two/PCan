@@ -53,7 +53,7 @@ use Phalcon\Tag; ?>
                     }
                     ?></td>
                 <td><?php
-                    if ($blog->comments_enabled == 1) {
+                    if ($blog->comments == 1) {
                         echo $this->tag->image("img/tick16.png");
                     }
                     ?></td>

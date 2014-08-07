@@ -28,10 +28,9 @@ tinymce.init({
 <?php echo $this->tag->form(array("blog/edit/" . $id, 'id'=>'myform')); ?>
 
 <table class="table table-striped">
-    <tr>
-        <td align="left"><?php echo $this->tag->linkTo(array("blog/index", "Index")) ?></td>
-        <td align="center"><?php echo $this->tag->linkTo(array("blog/comment/" . $id, "Comments")) ?></td>
-        <td align="right">{{submit_button("Save")}}</td>
+    <tr>        
+        <td class='leftCell'><?php echo $this->tag->linkTo(array("blog/comment/" . $id, "Comments", 'target'=>'_blank')) ?></td>
+        <td class='centerCell'><?php echo "Updated " . $blog->date_updated . " &nbsp;" . $this->tag->submitButton('Save') ?></td>
     <tr>
 </table>
 
@@ -48,7 +47,7 @@ tinymce.init({
     </tr>
     <tr>
         <td align="right">
-            <label for="title_clean">Title Of Clean</label>
+            <label for="title_clean">Unique URL</label>
         </td>
         <td align="left">
             <?php echo $this->tag->textField(array("title_clean", "size" => 50)) ?>
@@ -75,55 +74,61 @@ tinymce.init({
             <?php echo $this->tag->textField(array("date_published", "size" => 30)) ?>
         </td>
     </tr>
-    <tr>
-        <td align="right">
-            <label for="featured">Featured</label>
-        </td>
-        <td align="left"><?php if ($isApprover) {  
-            echo $this->tag->checkField(array("featured", "value" => $blog->featured));
-            } else {
-                  if ($blog->featured == 1) {
-                        echo $this->tag->image("img/tick16.png");
-                   }
-            } ?>
-        </td>    
-    </tr>
-    
-    <tr>
-        <td align="right">
-            <label for="enabled">Enabled</label>
-        </td>
-        <td align="left"><?php if ($isApprover) {  
-            echo $this->tag->checkField(array("enabled", "value" => $blog->enabled));
-            } else {
-                  if ($blog->enabled == 1) {
-                        echo $this->tag->image("img/tick16.png");
-                   }
-             } ?>
-        </td>
-    </tr>
-    <tr>
-        <td align="right">
-            <label for="comments_enabled">Comments enabled</label>
-        </td>
-        <td align="left"><?php if ($isApprover) {  
-            echo $this->tag->checkField(array("comments_enabled", "value" => $blog->comments_enabled));
-            } else {
-                   if ($blog->comments_enabled == 1) {
-                        echo $this->tag->image("img/tick16.png");
-                   } 
-            } ?>
-        </td>
-    </tr>
-    <tr>
-        <td align="right">
-            <label for="views">Views</label>
-        </td>
-        <td align="left">
-            <?php echo $this->tag->textField(array("views", "type" => "number")) ?>
-        </td>
-    </tr>
-
+    <?php if ($isApprover) { ?>
+     <tr>
+        <td align="right"><label for="enabled">Enabled</label></td>
+        <td align="left"><?php echo $this->tag->checkField(array("enabled", "value" => $blog->enabled)); ?></td>
+     </tr>
+      <tr>
+        <td align="right"><label for="featured">Featured</label></td>
+        <td align="left"><?php echo $this->tag->checkField(array("featured", "value" => $blog->featured)); ?></td>
+     </tr>
+     <tr>
+        <td align="right"><label for="comments">Comments</label></td>
+        <td align="left"><?php echo $this->tag->checkField(array("comments", "value" => $blog->comments)); ?></td>
+     </tr>
+    <?php } else { 
+            $tickImage = $this->tag->image("img/tick16.png");
+            $crossImage = $this->tag->image("img/cross16.png");
+    ?>
+     <tr>
+         <td colspan='2'>Values below can be altered by another Editor.</td>
+     </tr>
+      <tr>
+        <td align="right"><label for="enabled">Enabled</label></td>
+        <td align="left"><?php if ($blog->enabled==1) {echo $tickImage;} else {echo $crossImage;} ?></td>
+     </tr>
+      <tr>
+        <td align="right"><label for="featured">Featured</label></td>
+        <td align="left"><?php if ($blog->featured==1) {echo $tickImage;} else {echo $crossImage;} ?></td>
+     </tr>
+     <tr>
+        <td align="right"><label for="comments">Comments</label></td>
+        <td align="left"><?php if ($blog->comments==1) {echo $tickImage;} else {echo $crossImage;} ?></td>
+     </tr>
+    <?php } ?>
 </table>
 
+<div>
+    <table class='table table-striped'>
+        <thead>
+            <tr ><th class='centerCell' colspan='2'>Metatags (for search engines)</th></tr>
+        </thead>
+        <tbody>
+    <?php foreach($metatags as $meta)
+    {
+       // generate a name using a prefix.
+       $label = $meta->attr_value;
+       $name = 'metatag-'.$meta->id .'-'.$label;
+       $value = $meta->content;
+    ?>
+    <tr>
+        <td class='rightCell'><label for='<?php echo $name?>'><?php echo $label?></label>
+        <td class='leftCell'>{{ text_field(name, 'value':meta.content) }}</td>
+    </tr> 
+    <?php } ?>
+    </tbody>
+    </table>
+</div>
 </form>
+

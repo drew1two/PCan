@@ -79,16 +79,21 @@ $di->set('view', function () use ($config) {
 $di->set('db', function () use ($config) {
     
     
+    $eventsManager = null;
     $eventsManager = new EventsManager();
+    $dolog = $config->application->debuglog;
+    if ($dolog)
+    {
+        
+        $logger = new FileAdapter($config->application->logDir . "debug.log");
 
-    $logger = new FileAdapter($config->application->logDir . "debug.log");
-
-    //Listen all the database events
-    $eventsManager->attach('db', function($event, $connection) use ($logger) {
-        if ($event->getType() == 'beforeQuery') {
-            $logger->log($connection->getSQLStatement(), Logger::INFO);
-        }
-    });
+        //Listen all the database events
+        $eventsManager->attach('db', function($event, $connection) use ($logger) {
+            if ($event->getType() == 'beforeQuery') {
+                $logger->log($connection->getSQLStatement(), Logger::INFO);
+            }
+        });
+    }
     
 
     $connection = new Connection(array(
@@ -99,6 +104,7 @@ $di->set('db', function () use ($config) {
     ));
 
     //Assign the eventsManager to the db adapter instance
+
     $connection->setEventsManager($eventsManager);
 
     return $connection;

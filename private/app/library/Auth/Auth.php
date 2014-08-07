@@ -28,13 +28,13 @@ class Auth extends Component
         $user = Users::findFirstByEmail($credentials['email']);
         if ($user == false) {
             $this->registerUserThrottling(0);
-            throw new Exception('Wrong email/password combination');
+            throw new AuthException('Wrong email/password combination');
         }
         
         // Check the password
         if (!$this->security->checkHash($credentials['password'], $user->password)) {
             $this->registerUserThrottling($user->id);
-            throw new Exception('Wrong email/password combination');
+            throw new AuthException('Wrong email/password combination');
         }
 
         // Check if the user was flagged
@@ -68,7 +68,7 @@ class Auth extends Component
         $successLogin->userAgent = $this->request->getUserAgent();
         if (!$successLogin->save()) {
             $messages = $successLogin->getMessages();
-            throw new Exception($messages[0]);
+            throw new AuthException($messages[0]);
         }
     }
 
@@ -204,15 +204,15 @@ class Auth extends Component
     public function checkUserFlags(Users $user)
     {
         if ($user->active != 'Y') {
-            throw new Exception('The user is inactive');
+            throw new AuthException('The user is inactive');
         }
 
         if ($user->banned != 'N') {
-            throw new Exception('The user is banned');
+            throw new AuthException('The user is banned');
         }
 
         if ($user->suspended != 'N') {
-            throw new Exception('The user is suspended');
+            throw new AuthException('The user is suspended');
         }
     }
 
@@ -261,7 +261,7 @@ class Auth extends Component
     {
         $user = Users::findFirstById($id);
         if ($user == false) {
-            throw new Exception('The user does not exist');
+            throw new AuthException('The user does not exist');
         }
 
         $this->checkUserFlags($user);
@@ -285,7 +285,7 @@ class Auth extends Component
 
             $user = Users::findFirstById($identity['id']);
             if ($user == false) {
-                throw new Exception('The user does not exist');
+                throw new AuthException('The user does not exist');
             }
 
             return $user;

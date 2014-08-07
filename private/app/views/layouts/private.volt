@@ -17,6 +17,7 @@
                 'Users': 'users/list',
                 'Profiles': 'profiles/index',
                 'Permissions': 'permissions/index',
+                'Meta' : 'meta/index',
                 'Edit':'blog/index',
                 'Read':'read/index'
                 ] -%}

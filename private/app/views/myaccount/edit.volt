@@ -1,19 +1,13 @@
-
+  {{ content() }}
 <form method="post" autocomplete="off">
-
-    <ul class="pager">
-        <li class="previous pull-left">
-            {{ link_to("users", "&larr; Go Back") }}
-        </li>
-        <li class="pull-right">
-            {{ submit_button("Save", "class": "btn btn-big btn-success") }}
-        </li>
-    </ul>
-
-    {{ content() }}
-
+  
     <div class="center scaffold">
-        <h2>My Account</h2>
+        <table class='table table-borderless table-condensed'>
+            <tr><td><h2>My Account</h2></td>
+                <td>{{ submit_button("Save", "class": "btn btn-big btn-success") }}</td>
+            </tr>
+        </table>
+        
 
         <ul class="nav nav-tabs">
             <li class="active"><a href="#A" data-toggle="tab">Basic</a></li>

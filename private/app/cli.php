@@ -1,16 +1,37 @@
 <?php
 
+error_reporting(E_ALL);
+ini_set('display_errors', 'On');
+
  use Phalcon\DI\FactoryDefault\CLI as CliDI,
      Phalcon\CLI\Console as ConsoleApp;
-
+ 
  define('VERSION', '1.0.0');
+ 
+define('APP_DIR',  __DIR__);
+define('BASE_DIR', dirname(APP_DIR));
 
+ $config = include APP_DIR . "/config/config.php";
+ date_default_timezone_set($config->application->timezone);;
+
+ include APP_DIR . "/config/loader.php";     
+ 
  //Using the CLI factory default services container
  $di = new CliDI();
-
+ $di->set('config', $config);
+ 
  // Define path to application directory
  defined('APP_DIR')
  || define('APP_DIR', realpath(dirname(__FILE__)));
+
+ /**
+ * Crypt service
+ */
+$di->set('crypt', function () use ($config) {
+    $crypt = new Crypt();
+    $crypt->setKey($config->application->cryptSalt);
+    return $crypt;
+});
 
  /**
   * Register the autoloader and tell it to register the tasks directory

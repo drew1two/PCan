@@ -12,7 +12,7 @@
 <div id="do-collapse-1">
     <ul class="nav navbar-nav Nav">
             {%- set menus = [
-              'Home': 'index/index',
+              'Home': 'index',
               'Articles': 'read/index',
               'Contact': 'contact/index',
               'About': 'about/index'

@@ -12,19 +12,19 @@ class Blog extends \Phalcon\Mvc\Model
      * @var integer
      */
     public $id;
+    /**
+     *
+     * @var datetime
+     */
+    public $date_published;
      
+    public $data_updated;
+    
     /**
      *
      * @var string
      */
     public $title;
-     
-    /**
-     *
-     * @var string
-     */
-    public $article;
-     
     /**
      *
      * @var string
@@ -33,22 +33,20 @@ class Blog extends \Phalcon\Mvc\Model
      
     /**
      *
+     * @var string
+     */
+    public $article;
+     
+    
+     
+    /**
+     *
      * @var integer
      */
     public $author_id;
      
-    /**
-     *
-     * @var string
-     */
-    public $date_published;
-     
-    /**
-     *
-     * @var string
-     */
-    public $featured;
-     
+
+    
     /**
      *
      * @var string
@@ -59,17 +57,32 @@ class Blog extends \Phalcon\Mvc\Model
      *
      * @var string
      */
-    public $comments_enabled;
+    public $comments;
      
+    /**
+     *
+     * @var string
+     */
+    public $featured;
+    
+    /**
+     *
+     * @var string
+     */
+    public $bundle_type;
+    
     /**
      *
      * @var integer
      */
-    public $views;
+    public $bundle_id;
+    /**
     
     public function initialize()
     {
         $this->belongsTo("author_id", 'Users', "id");
-    }
+    }* 
+     */
      
 }
+     

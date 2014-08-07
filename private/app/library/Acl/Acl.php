@@ -7,9 +7,7 @@ use Phalcon\Acl\Role as AclRole;
 use Phalcon\Acl\Resource as AclResource;
 use Pcan\Models\Profiles;
 
-/**
- * Vokuro\Acl\Acl
- */
+
 class Acl extends Component
 {
 
@@ -72,6 +70,11 @@ class Acl extends Component
             'delete',
             'create',
             'comment',
+        ),
+        'meta' => array(
+            'new',
+            'index',
+            'edit',
         ),
     );
 
@@ -232,7 +235,8 @@ class Acl extends Component
 
             // Always grant these permissions
             $acl->allow($profile->name, 'users', 'changePassword');
-            $acl->allow("Administrators", 'permissions', 'index');
+            $acl->allow($profile->name, 'myaccount', 'edit');
+            $acl->allow("Administrator", 'permissions', 'index');
         }
 
         if (touch(APP_DIR . $this->filePath) && is_writable(APP_DIR . $this->filePath)) {

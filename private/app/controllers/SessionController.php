@@ -5,32 +5,21 @@ namespace Pcan\Controllers;
 use Pcan\Forms\LoginForm;
 use Pcan\Forms\SignUpForm;
 use Pcan\Forms\ForgotPasswordForm;
-use Pcan\Auth\Exception as AuthException;
 use Pcan\Models\Users;
 use Pcan\Models\ResetPasswords;
 
 
-require_once __DIR__ . '/../../vendor/google/recaptcha-php/recaptchalib.php';
-
+use Pcan\Captcha\Recaptcha;
+use Pcan\Auth\AuthException;
 
 /**
  * Controller used handle non-authenticated session actions like login/logout, user signup, and forgotten passwords
  */
 class SessionController extends ControllerBase {
 
-    protected function captchaCheck() {
-        // do the google captcha
-        $privatekey = "6LcXY_YSAAAAAAhWs4KE3Q7koqqB4nLHKQmIKnmA"; //localhost
-        $resp = recaptcha_check_answer($privatekey, $_SERVER["REMOTE_ADDR"], $_POST["recaptcha_challenge_field"], $_POST["recaptcha_response_field"]);
-
-        if (!$resp->is_valid) {
-// What happens when the CAPTCHA was entered incorrectly
-            throw new AuthException('Invalid Captcha. Try again.');
-        }
-    }
 
     public function indexAction() {
-        
+        return $this->loginAction();
     }
 
     /**
@@ -38,15 +27,18 @@ class SessionController extends ControllerBase {
      */
     public function signupAction() {
         $form = new SignUpForm();
-
+        $this->view->form = $form;
+        $this->view->title = 'ParraCAN Signup';
         if ($this->request->isPost()) {
+            $request = $this->request;
             try {
                 
                 $config = $this->getDI()->get('config');
                 // Captcha check new signups first
                 if ($config->application->signupCaptcha)
                 {
-                    $this->captchaCheck();
+                    if (!Recaptcha::checkCaptcha($request,$config))
+                            throw AuthException("Invalid Captcha: Try again");
                 }
                 if ($form->isValid($this->request->getPost()) != false) {
                     
@@ -73,7 +65,7 @@ class SessionController extends ControllerBase {
             }
         }
 
-        $this->view->form = $form;
+        
     }
 
     /**
@@ -81,7 +73,8 @@ class SessionController extends ControllerBase {
      */
     public function loginAction() {
         $form = new LoginForm();
-
+        $this->view->form = $form;
+        $this->view->title = 'ParraCAN Login';
         try {
 
             if (!$this->request->isPost()) {
@@ -116,7 +109,7 @@ class SessionController extends ControllerBase {
             $this->flash->error($e->getMessage());
         }
 
-        $this->view->form = $form;
+        
     }
 
     /**

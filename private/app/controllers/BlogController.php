@@ -4,16 +4,97 @@ namespace Pcan\Controllers;
 use Phalcon\Mvc\Model\Criteria;
 use Phalcon\Paginator\Adapter\Model as Paginator;
 use Phalcon\Db\Adaptor\Pdo\MySql;
-use Phalcon\Db as PDO;
+use Phalcon\Db\Adaptor\Pdo;
+use Phalcon\Db;
+
 use Pcan\Models\BlogComment;
 use Pcan\Forms\CommentForm;
 use Pcan\Models\Blog;
 
 use Pcan\Models\PageInfo as PageInfo;
 
+require_once __DIR__ . ' /../library/Text/Html.php';
+
+
 class BlogController extends ControllerBase
 {
     public $posted;
+    private $connect;
+    
+    private function getDb()
+    {
+        if (is_null($this->connect))
+        {
+            $di = \Phalcon\DI::getDefault();
+            $this->connect = $di->get('db');
+            $this->connect->connect();
+        }
+        return $this->connect;
+    }
+    /**
+     * Make title_clean unique by appending more characters.
+     * Do not need to do this if title has not changed.
+     * @param type $base_name
+     * @param type $existingid
+     */
+    private function unique_title_url($blog,$slug)
+    {
+        $sql = 'select count(*) from blog where title_clean = :tc';
+        $isUpdate = !is_null($blog->id) && ($blog->id > 0);
+        
+        if ($isUpdate)
+        {
+            // exclude self from search, in case of no change?
+            $sql .= ' and id <> :bid';
+        }
+        $db = $this->getDb();
+        $stmt = $db->prepare($sql);
+        $tryCount = 0;
+        
+        $candidate = $slug;
+        $date = new \DateTime($blog->date_published);
+        if ($isUpdate)
+        {
+            $stmt->bindValue(':bid', $blog->id, \PDO::PARAM_INT);
+        }
+        while ($tryCount < 5)
+        {
+            $stmt->bindValue(':tc',$candidate, \PDO::PARAM_STR);
+            $stmt->execute();
+            $count_star = $stmt->fetch(\PDO::FETCH_NUM);
+            if ($count_star[0] == 0)
+            {
+                break;
+            }
+            else {
+                if (tryCount == 0)
+                {
+                    $slug .= '-' . date('Ymd',$date->getTimestamp());
+                    $candidate = $slug;
+                }
+                else {
+                    $candidate = $slug . '-' . $tryCount;
+                }
+            }
+            $tryCount += 1;
+        }
+        $blog->title_clean = $candidate;
+    }
+    private function getMetaTags($id)
+    {
+             // setup metatag info
+        $sql = "select m.id, m.attr_value, m.attr_name, m.content_type, b.content, b.blog_id"
+                . " from meta m"
+                . " left join blog_meta b on b.meta_id = m.id"
+                . " and b.blog_id = " . $id;
+        // form with m_attr_value as labels, content as edit text.
+        $db = $this->getDb();
+        $stmt = $db->prepare($sql);
+        $stmt->execute();
+        $stmt->setFetchMode(\Phalcon\Db::FETCH_OBJ);    
+        $results = $stmt->fetchAll();
+        return $results;  
+    }
     
     public function initialize()
     {
@@ -49,15 +130,13 @@ class BlogController extends ControllerBase
                 . " order by b.date_published desc"
                 . " limit " . $start . ", " . $grabsize ;
          
-        $di = \Phalcon\DI::getDefault();
-        $mm = $di->get('db');
-        $mm->connect();
+        $db = $this->getDb();
         
-        $stmt = $mm->query($sql);
+        $stmt = $db->query($sql);
         $stmt->setFetchMode(\Phalcon\Db::FETCH_OBJ);    
         $results = $stmt->fetchAll();
     
-        $cquery = $mm->query("SELECT FOUND_ROWS()");
+        $cquery = $db->query("SELECT FOUND_ROWS()");
         $cquery->setFetchMode(\Phalcon\Db::FETCH_NUM);
         $maxrows = $cquery->fetch();
         
@@ -69,7 +148,7 @@ class BlogController extends ControllerBase
         $this->flash->notice($s);   */
         $this->view->page = $paginator; 
         $this->view->user_id = null;
-        $canEdit = array("Editors","Administrators");
+        $canEdit = array("Editor","Administrator");
         $identity = $this->session->get('auth-identity');
         if (isset($identity) && isset($identity['id'])) {
             $this->view->user_id = $identity['id'];
@@ -162,7 +241,7 @@ class BlogController extends ControllerBase
         
         // default to current date
         $blog->date_published = date('Y-m-d H:i:s');
-        
+        $blog->date_updated = date('Y-m-d H:i:s');
         $this->setBlogFromPost($blog);
        
         if (!$blog->save()) {
@@ -184,13 +263,32 @@ class BlogController extends ControllerBase
     // standard updates from edit or new.
     private function setBlogFromPost(&$blog)
     {
-        $blog->title = $this->request->getPost("title");
-        $blog->title_clean = $blog->title;
+        $newTitle = $this->request->getPost('title','striptags');
+        $titleChanged = ($blog->title !== $newTitle);
+        $blog->title = $newTitle;
+        $newUrl = '';
+        $autoUrl = True;
+        if (!is_null($blog->id))
+        {
+            $newUrl = $this->request->getPost('title_clean','striptags');
+            
+            if ($newUrl != $blog->title_clean)
+            {
+                $this->unique_title_url($blog,$newUrl); 
+                $autoUrl = False;
+            }
+        }
+        
+        if ($titleChanged && $autoUrl)
+        {
+            $this->unique_title_url($blog,url_slug($blog->title));   
+        }
         $blog->article = $this->request->getPost("article");
        
-        $blog->featured = $this->int_bool("featured");
-        $blog->enabled = $this->int_bool("enabled");
-        $blog->comments_enabled = $this->int_bool("comments_enabled");           
+        $blog->featured = $this->int_bool('featured');
+        $blog->enabled = $this->int_bool('enabled');
+        $blog->comments = $this->int_bool('comments'); 
+        $blog->date_updated = date('Y-m-d H:i:s');
     }
     private function setTagFromBlog($blog)
     {
@@ -201,11 +299,12 @@ class BlogController extends ControllerBase
         $this->tag->setDefault("title_clean", $blog->title_clean);
         $this->tag->setDefault("author_id", $blog->author_id);
         $this->tag->setDefault("date_published", $blog->date_published);
+        $this->tag->setDefault("date_updated", $blog->date_updated);
         $this->tag->setDefault("views", $blog->views);        
         // Checkbox field needs a default
         $this->tag->setDefault("featured", 1);  
         $this->tag->setDefault("enabled", 1);  
-        $this->tag->setDefault("comments_enabled", 1);
+        $this->tag->setDefault("comments", 1);
     }
     
     private function getView($id)
@@ -223,6 +322,36 @@ class BlogController extends ControllerBase
         $this->view->blog = $blog;
     }
     /**
+     * Make an edit form for blog $id
+     * @param type $id
+     * @return type null
+     */
+    private function editForm($id)
+    {
+        $identity = $this->session->get('auth-identity');
+        if (isset($identity) && isset($identity['id'])) {
+           $user_id = $identity['id'];
+        }
+        else {
+           $user_id = null;
+        }
+        $this->getView($id);
+        $blog = $this->view->blog;
+        $canEdit = array("Editor", "Administrator");
+        $profile = $identity['profile'];
+
+        $isApprover = in_array($profile, $canEdit) && ($blog->author_id !== $user_id);
+        $this->view->isApprover = $isApprover;
+        if (!$canEdit)
+        {
+           $this->response->redirect("blog/comment/".$id);
+           return;
+        }
+        // setup metatag info
+
+        $this->view->metatags = $this->getMetaTags($id);       
+    }
+    /**
      * Edits a blog
      *
      * @param string $id
@@ -233,25 +362,7 @@ class BlogController extends ControllerBase
             return true;
         
         if (!$this->request->isPost()) {
-            $identity = $this->session->get('auth-identity');
-            if (isset($identity) && isset($identity['id'])) {
-                $user_id = $identity['id'];
-            }
-            else {
-                $user_id = null;
-            }
-            $this->getView($id);
-            $blog = $this->view->blog;
-            $canEdit = array("Editors", "Administrators");
-            $profile = $identity['profile'];
-
-            $isApprover = in_array($profile, $canEdit) && ($blog->author_id !== $user_id);
-            $this->view->isApprover = $isApprover;
-            if (!$isApprover && ($blog->author_id !== $user_id))
-            {
-                $this->response->redirect("blog/comment/".$id);
-            }
-            
+            $this->editForm($id);
         }
         else {
             return $this->updatePost($id);
@@ -394,10 +505,62 @@ class BlogController extends ControllerBase
                 "params" => array($blog->id)
             ));
         }
-        // show edit again
-        return $this->getView($blog->id);
+        $metatags = BlogController::getMetaTags($id);
+        $db = $this->getDb();
+        $inTrans = false;
+        foreach($metatags as $mtag)
+        {
+            // key = meta.#id.value
+            $key = 'metatag-'. $mtag->id . '-' . $mtag->attr_value;
+            
+            $content = $this->request->getPost($key,'striptags');
+            
+            if (is_null($content) || empty($content))
+            {
+                // link content record needs deleting ? 
+                if (!is_null($mtag->blog_id))
+                {
+                    if (!$inTrans)
+                    {
+                        $db->begin();
+                        $inTrans = True;
+                        
+                    }
+                    $sql = "delete from blog_meta where blog_id = :blogid"
+                            . " and meta_id = :metaid";
+                    $stmt = $db->prepare($sql);
+                    $stmt->bindValue(':blogid', (int) $blog->id, \PDO::PARAM_INT);
+                    $stmt->bindValue(':metaid', (int) $mtag->id, \PDO::PARAM_INT);  
+                    $stmt->execute();
+                }
+            }
+            else {
+                if (!$inTrans)
+                {
+                    $db->begin();
+                    $inTrans = True;
+                }
+                $sql = "replace into blog_meta (blog_id, meta_id, content)"
+                        . " values(:blogid, :metaid, :content)";
+                $stmt = $db->prepare($sql);
+                $stmt->bindValue(':blogid', (int) $blog->id, \PDO::PARAM_INT);
+                $stmt->bindValue(':metaid', (int) $mtag->id, \PDO::PARAM_INT);
+                $stmt->bindValue(':content', $content, \PDO::PARAM_STR);
+                $stmt->execute();
+            }
+            
+        }
+        if ($inTrans)
+        {
+             $db->commit();
+        }
+
+        // get the metatag info from the POST
+        // reconstruct the view
+        $this->editForm($id);
 
     }
+
 
     /**
      * Deletes a blog

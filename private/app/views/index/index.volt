@@ -6,7 +6,7 @@
             <span style="font-size:1.2em;">Recent Articles</span>
             <ul class="list-unstyled">
                 <?php foreach ($recent as $blog) { ?>
-                    <li class="Nav"><?php echo $this->tag->linkTo(array("read/article/" . $blog->id, "&bull; ".$blog->title)); ?></li>
+                    <li class="Nav"><?php echo $this->tag->linkTo(array("article/" . $blog->title_clean, $blog->title)); ?></li>
                 <?php } ?>
             </ul>
         </div>
@@ -15,7 +15,7 @@
                 <h2><?php echo $blog->title ?></h2> 
                 <div>   
                 <?php echo $blog->article;
-                      echo $this->tag->linkTo("read/article/" . $blog->id, "Read more ...");
+                      echo $this->tag->linkTo("article/" . $blog->title_clean, "Read more ...");
                 ?>
                 </div> 
                 <hr>

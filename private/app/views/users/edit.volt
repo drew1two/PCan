@@ -3,7 +3,7 @@
 
 <ul class="pager">
     <li class="previous pull-left">
-        {{ link_to("users", "&larr; Go Back") }}
+        {{ link_to("users/index", "&larr; Go Back") }}
     </li>
     <li class="pull-right">
         {{ submit_button("Save", "class": "btn btn-big btn-success") }}

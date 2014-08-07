@@ -1,4 +1,4 @@
-
+{{ content() }}
 <form method="post" autocomplete="off">
 
 <ul class="pager">
@@ -9,8 +9,6 @@
         {{ submit_button("Save", "class": "btn btn-success") }}
     </li>
 </ul>
-
-{{ content() }}
 
 <div class="center scaffold">
     <h2>Create a Profile</h2>

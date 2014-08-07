@@ -18,7 +18,7 @@ class SignUpForm extends Form
 
     public function initialize($entity = null, $options = null)
     {
-        $name = new Text('name');
+        $name = new Text('name',array('size' => 60, 'maxlength'=>60));
 
         $name->setLabel('Name');
 
@@ -31,7 +31,7 @@ class SignUpForm extends Form
         $this->add($name);
 
         // Email
-        $email = new Text('email');
+        $email = new Text('email',array('size' => 50, 'maxlength'=>45));
 
         $email->setLabel('E-Mail');
 
@@ -84,7 +84,7 @@ class SignUpForm extends Form
         $terms = new Check('terms', array(
             'value' => 'yes'
         ));
-
+            /*
         $terms->setLabel('Accept terms and conditions');
 
         $terms->addValidator(new Identical(array(
@@ -93,6 +93,8 @@ class SignUpForm extends Form
         )));
 
         $this->add($terms);
+             
+             */
 
         // CSRF
         $csrf = new Hidden('csrf');

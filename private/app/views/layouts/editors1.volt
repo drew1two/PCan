@@ -13,7 +13,7 @@
 <div >
     <ul id='mymenu' class="nav navbar-nav Nav" >
              {%- set menus = [
-              'Home': 'index/index',
+              'Home': 'index',
               'Articles': 'read/index',
               'Edit' : 'blog/index',
               'Contact': 'contact/index',

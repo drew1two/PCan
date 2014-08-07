@@ -1,5 +1,58 @@
 <?php
 
+/**
+ * Turn a title into a URL
+ * @param type $str
+ * @return string 
+ */
+function url_slug($str)
+{	
+	#convert case to lower
+	$str = strtolower($str);
+	#remove special characters
+	$str = preg_replace('/[^a-zA-Z0-9]/i',' ', $str);
+	#remove white space characters from both side
+	$str = trim($str);
+	#remove double or more space repeats between words chunk
+	$str = preg_replace('/\s+/', ' ', $str);
+	#fill spaces with hyphens
+	$str = preg_replace('/\s+/', '-', $str);
+	return $str;
+}
+
+/**
+ * Return DOMDocument loaded with html string using UTF-8 hack
+ * @param string $html 
+ * @param ref errors array of string
+ */
+function html_utf8_doc(&$html, &$errors)
+{
+    $doc = new DOMDocument();
+    $encoding = 'UTF-8';
+    $noErrors = True;
+    $saveErrors = libxml_use_internal_errors(true);
+    if (!$doc->loadHTML("<?xml encoding='" . $encoding . "'?>" . $html));
+    {
+        foreach (libxml_get_errors() as $error) {
+            if(isset($errors))
+                $errors[] = $error->message;
+        }
+        // should we continue?
+        libxml_clear_errors();
+        $noErrors = False;
+    }
+    foreach($doc->childNodes as $item)
+    {
+        if ($item->nodeType==XML_PI_NODE)
+        {
+            $doc->removeChild($item);
+        }
+    }
+    libxml_use_internal_errors($saveErrors);
+    $doc->encoding = $encoding;
+    return $doc;
+}
+
 /*
  * PCAN php website model based on Phalcon and Vokura
  */
@@ -21,8 +74,7 @@ function visitNodes(DOMNode $p, &$textnodes)
 /** Strip the html text, as a DOM, of all nodes after text limit breached */
 
 function IntroText(&$htmlText, $limitSize) {
-    $doc = new DOMDocument();
-    $doc->loadHTML($htmlText);
+    $doc = html_utf8_doc($htmlText);
     $totallen = 0;
     $strip = false;
     $textnodes = array();

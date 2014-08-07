@@ -3,7 +3,7 @@
 namespace Pcan\Controllers;
 use Phalcon\Db as PDO;
 
-require_once __DIR__ . '/../library/Text/IntroMake.php';
+require_once __DIR__ . '/../library/Text/Html.php';
 
 class IndexController extends ControllerBase
 {
@@ -26,7 +26,7 @@ class IndexController extends ControllerBase
         $db->connect();
         
         $mquery = $db->query(
-                "select b.id, b.title, b.date_published from blog b where b.enabled=1 "
+                "select b.id, b.title, b.date_published, b.title_clean from blog b where b.enabled=1 "
                 . "order by date_published desc limit 12"
                 );
         $mquery->setFetchMode(PDO::FETCH_OBJ);
@@ -35,7 +35,7 @@ class IndexController extends ControllerBase
         $this->view->recent = $blog;
         
         $fquery = $db->query(
-            "select b.id, b.title, b.date_published, b.article from blog b "
+            "select b.id, b.title, b.date_published, b.article, b.title_clean from blog b "
             . " where b.featured=1" 
             . " order by b.date_published desc limit 3"
         );
@@ -47,7 +47,8 @@ class IndexController extends ControllerBase
             //echo $blog->article;
             $blog->article = IntroText($blog->article, 150);
         }
-        $this->view->feature = $feature;   
+        $this->view->feature = $feature; 
+        $this->view->title = "ParraCAN Home Page";
     }
     
     public function route404Action()

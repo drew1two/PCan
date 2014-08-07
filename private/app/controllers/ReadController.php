@@ -23,7 +23,24 @@ use Pcan\Forms\CommentForm;
 
 class ReadController extends ControllerBase
 {
-    
+    private function getMetaTags($id)
+    {
+             // setup metatag info
+        $sql = "select m.id, m.attr_value, m.attr_name, m.content_type, b.content"
+                . " from meta m"
+                . " left join blog_meta b on b.meta_id = m.id"
+                . " and b.blog_id = " . $id;
+        // form with m_attr_value as labels, content as edit text.
+
+        $di = \Phalcon\DI::getDefault();
+        $db = $di->get('db');
+
+        $stmt = $db->prepare($sql);
+        $stmt->execute();
+        $stmt->setFetchMode(\Phalcon\Db::FETCH_OBJ);    
+        $results = $stmt->fetchAll();
+        return $results;  
+    }   
 
     /**
      * Index action
@@ -72,8 +89,8 @@ class ReadController extends ControllerBase
     private function setFromBlog($blog)
     {
         
-       $logger =  \Phalcon\DI::getDefault()->get('logger');
-       $logger->log("setFromBlog", \Phalcon\Logger::DEBUG);
+       //$logger =  \Phalcon\DI::getDefault()->get('logger');
+       //$logger->log("setFromBlog", \Phalcon\Logger::DEBUG);
        /* $this->tag->setDefault("id", $blog->id);
         $this->tag->setDefault("title", $blog->title);
         $this->tag->setDefault("article", $blog->article);
@@ -107,10 +124,44 @@ class ReadController extends ControllerBase
             
         }
     }
+    
     public function pageAction()
     { 
-        $numberPage = $this->request->getQuery("page", "int");
+        $this->view->title = 'ParraCAN Article Index';
+        $orderby = $this->request->getQuery('orderby');
+        if (is_null($orderby))
+        {
+            $orderby = 'date';
+        }
+        $order_list = array(  
+            'title-alt' => 'b.title desc',
+            'title' => 'b.title asc',
+            'date-alt' => 'b.date_published asc',
+            'date' => 'b.date_published desc',
+            'author' => 'author_name asc',
+            'author-alt' => 'author_name desc',
+        );
+        $alt_list = array(
+            'date' => 'date',
+            'title' => 'title',
+            'author' => 'author',
+        );
+        if ($orderby=='title')
+        {
+            $alt_list['title'] = 'title-alt';
+        }
+        else if($orderby=='date')
+        {
+            $alt_list['date'] = 'date-alt';
+        }
+        else if($orderby=='author')
+        {
+            $alt_list['author'] = 'author-alt';        
+        }
+        $this->view->orderalt = $alt_list;
+        $this->view->orderby = $orderby;
         
+        $numberPage = $this->request->getQuery("page", "int");
         if (is_null($numberPage))
         {
             $numberPage = 1;
@@ -123,10 +174,10 @@ class ReadController extends ControllerBase
         $start = ($numberPage-1) * $grabsize;
         //SQL_CALC_FOUND_ROWS
         $sql = "select  SQL_CALC_FOUND_ROWS b.id, b.title, b.article, "
-                . " b.date_published, u.name as author_name from blog b"
+                . " b.title_clean, b.date_published, u.name as author_name from blog b"
                 . " left join users u on u.id = b.author_id"
                 . " where b.enabled = 1"
-                . " order by b.date_published desc"
+                . " order by " . $order_list[$orderby]
                 . " limit " . $start . ", " . $grabsize ;
          
          
@@ -149,6 +200,7 @@ class ReadController extends ControllerBase
         $s = ob_get_clean();
         $this->flash->notice($s);   */
         $this->view->page = $paginator; 
+        
     }
     /**
      * View a blog
@@ -184,6 +236,7 @@ class ReadController extends ControllerBase
        
        $this->getBlog($bid);
        $this->view->blog = $this->ablog;
+       $this->view->title = "ParraCAN: " . $this->ablog->title;
        if($this->ablog->enabled != true)
        {
            $this->view->pick("read/unavailable");
@@ -218,6 +271,7 @@ class ReadController extends ControllerBase
             $comment->user_id = $user_id;
         }
         
+        $this->view->meta = $this->getMetaTags($id);
         $this->view->user_id = $user_id;
         $comment->blog_id = $id;
         $this->view->form = new CommentForm($comment, array(

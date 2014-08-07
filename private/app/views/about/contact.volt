@@ -1,49 +1,81 @@
+<?php use \Pcan\Captcha\Recaptcha; ?>
+
 {{ content() }}
 
 <div class="container-fluid">
-<div align="left">
-    <h2>Contact Parracan</h2>
-</div>
-<style>
-    td.contact {
-        vertical-align:top;
-    }
-    td.value {
-        padding-left:10px;
+    <div class='table-responsive'>
+        <table class="table table-condensed table-bordered">
+            <thead>
+                <tr>
+                    <th colspan='2' class="centerCell">Contact Parracan</th>
+                </tr>
+                <tr>
+                    <th class="centerCell">Postal</th>
+                    <th class="centerCell">Phone</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>15 Cliff Avenue,<br/> Winston Hills,<br/>NSW 2153 Australia</td>
+                    <td style='padding:0;'>
+                        <table class='table-condensed table-borderless'>
+                            <tr class='noline'>
+                                <td class="cellLeft">Annie Nielsen</td>
+                                <td class="cellLeft">0425 265 169</td>
+                            </tr>
+                            <tr class='noline'>
+                                <td class="cellLeft">Terry McBride</td>
+                                <td class="cellLeft">0418 859 211</td>
+                            </tr>
+                            <tr class='noline'>
+                                <td class="cellLeft">Phil Bradley</td>
+                                <td class="cellLeft">0425 265 170</td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+            </tbody>
+
+        </table>
+    </div>
+<div class='container'>
+    <form method='post'>
+    <table class="table table-condensed table-bordered">
+        <thead>
+            <tr>
+                <th colspan='2' class='centerCell'><span style='font-weight:bold'>Send Email Direct (or use <a href='mailto:secretary@parracan.org'>secretary@parracan.org</a>)</span></th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td class='rightCell'><label for='name'>Name</label></td>
+                <td class='leftCell'><?php echo $form->render('name');?></td>
+            </tr>
+            <tr>
+                <td class='rightCell'><label for='telephone'>Telephone</label></td>
+                <td class='leftCell'><?php echo $form->render('telephone');?></td>
+            </tr>
+            <tr>
+                <td class='rightCell'><label for='email'>Sender's email</label></td>
+                <td class='leftCell'><?php echo $form->render('email');?></td>
+            </tr>
+            <tr>
+                <td class='rightCell'><label for='body'>Text</label></td>
+                <td class='leftCell'><?php echo $form->render('body');?></td>
+            </tr>
+          <?php
+             $config = Phalcon\DI::getDefault()->get('config');
+             if ($config->application->recaptcha)
+             {
+                 echo Recaptcha::htmlCaptcha($config);      
+             }
+         ?>
+            <tr>
+                <td colspan='2' class='centerCell'><?php echo $this->tag->submitButton(array('Send as Email', 'class' => 'btn btn-default')) ?></td>
+            </tr>
 
 
-    }
-</style>  
-<div align="left">
-    <table>
-        <tr>
-            <td class="contact">Postal:</td>
-            <td>15 Cliff Avenue,<br/> Winston Hills,<br/> NSW 2153 Australia</td>
-        </tr>
-        <tr>
-            <td class="contact">Email:</td>
-            <td>secretary@parracan.org</td>
-        </tr>
-        <tr>
-            <td class="contact">Phone:</td>
-            <td> 
-                <table>
-                    <tr>
-                        <td class="value">Annie Nielsen</td>
-                        <td class="value">0425 265 169</td>
-                    </tr>
-                    <tr>
-                        <td class="value">Terry McBride</td>
-                        <td class="value">0418 859 211</td>
-                    </tr>
-                    <tr>
-                        <td class="value">Phil Bradley</td>
-                        <td class="value">0425 265 170</td>
-                    </tr>
-                </table>
-            </td>
-        </tr>
-
+        </tbody>
     </table>
-</div>
+    </form>
 </div>

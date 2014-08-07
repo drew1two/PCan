@@ -24,11 +24,11 @@ class ControllerBase extends \Phalcon\Mvc\Controller
         }
         $profile = $identity['profile'];
 
-        if ($profile == 'Users')
+        if ($profile == 'Member')
         {
             $this->view->setTemplateBefore('users1');
         }
-        elseif ($profile == 'Editors') 
+        elseif ($profile == 'Editor') 
         {
              $this->view->setTemplateBefore('editors1');
         }
@@ -47,16 +47,20 @@ class ControllerBase extends \Phalcon\Mvc\Controller
     public function beforeExecuteRoute(Dispatcher $dispatcher)
     {
         $controllerName = $dispatcher->getControllerName();
-        $logger =  \Phalcon\DI::getDefault()->get('logger');
+        //$dolog = $config->application->debuglog;
+        
+        //$logger = $dolog ? \Phalcon\DI::getDefault()->get('logger') : null;
+
 
          // Only check permissions on private controllers
         if ($this->acl->isPrivate($controllerName)) {
             // If there is no identity available the user is redirected to index/index
-            $logger->log('Private page ' . $controllerName . ' in ' . __CLASS__, \Phalcon\Logger::DEBUG);
+            
+            //$logger->log('Private page ' . $controllerName . ' in ' . __CLASS__, \Phalcon\Logger::DEBUG);
             $identity = $this->auth->getIdentity();
             if (!is_array($identity)) 
             {
-                $logger->log('No identity found for private ' . $controllerName . ' in ' . __CLASS__, \Phalcon\Logger::DEBUG);
+                //$logger->log('No identity found for private ' . $controllerName . ' in ' . __CLASS__, \Phalcon\Logger::DEBUG);
 
                 $dispatcher->forward(array(
                     'controller' => 'index',
@@ -90,7 +94,7 @@ class ControllerBase extends \Phalcon\Mvc\Controller
             }
         }
         else {
-            $logger->log('Public page ' . $controllerName . ' in ' . __CLASS__, \Phalcon\Logger::DEBUG);
+            //$logger->log('Public page ' . $controllerName . ' in ' . __CLASS__, \Phalcon\Logger::DEBUG);
             
         }
         return true;
