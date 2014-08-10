@@ -41,10 +41,7 @@ class MetaController extends ControllerBase {
         $grabsize = 10;
         $start = ($numberPage-1) * $grabsize;
         //SQL_CALC_FOUND_ROWS
-        $sql = "select  SQL_CALC_FOUND_ROWS m.id, m.attr_value, "
-                . " m.attr_name,"
-                . " m.content_type,"
-                . " m.auto_filled from meta m order by m.attr_value"
+        $sql = "select  SQL_CALC_FOUND_ROWS * from meta order by meta_name"
                 . " limit " . $start . ", " . $grabsize;
 
          
@@ -102,10 +99,10 @@ class MetaController extends ControllerBase {
         }
 
         $meta->assign(array(
-            'attr_name' => $this->request->getPost('attr_name', 'striptags'),
-            'attr_value' => $this->request->getPost('attr_value', 'striptags'),
+            'meta_name' => $this->request->getPost('meta_name', 'striptags'),
+            'template' => $this->request->getPost('template'),
             'auto_filled' => $this->request->getPost('auto_filled'),
-            'content_type' => $this->request->getPost('content_type', 'striptags'),
+            'data_limit' => $this->request->getPost('data_limit', 'striptags'),
         ));
 
         if (is_null($meta->id) || $meta->id===0)

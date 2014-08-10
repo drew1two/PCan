@@ -53,7 +53,7 @@ class BlogTask extends ImportDb {
                 "SELECT  n.title, FROM_UNIXTIME(`n`.`created`) as mod_time,"
                 . "b.body_value, n.nid FROM node n"
                 . " join field_data_body b on b.entity_id = n.nid"
-                . " where n.type='article' and n.title <> 'Meeting Minutes'"
+                . " where ((n.type='article') or (n.type='news_article')) and n.title <> 'Meeting Minutes'"
                 . " order by mod_time");
 
         echo "There are ", $blogset->numRows(), " rows" . PHP_EOL;

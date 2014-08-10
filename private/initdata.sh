@@ -11,3 +11,12 @@ php app/cli.php main addUser 'michael.rynn.500@gmail.com' 'Zeny Entropy' Editor 
 php app/cli.php init profile Administrator ALL
 php app/cli.php init profile Member  myaccount comment
 php app/cli.php init profile Editor myaccount blog comment
+
+php app/cli.php init profile Editor myaccount blog comment
+# metatags
+php app/cli.php init metatag 'description' 155 "<meta name='description' content='{}' />"
+php app/cli.php init metatag 'author' 50 "<meta name='author' content='{}' />"
+php app/cli.php init metatag 'keywords' 200 "<meta name='keywords' content='{}' />"
+php app/cli.php init metatag 'og:title' 155 "<meta property='og:title'  content='{}' />"
+php app/cli.php init metatag 'og:image' 200 "<meta property='og:image'  content='{}' />"
+php app/cli.php init metatag 'og:description' 200 "<meta property='og:description'  content='{}' />"

@@ -6,6 +6,7 @@ ini_set('display_errors', 'On');
 try {
     define('BASE_DIR', dirname(__DIR__));
     define('APP_DIR',  BASE_DIR . '/private/app');
+   
     //echo APP_DIR . "<br/>";
     /**
      * Read the configuration

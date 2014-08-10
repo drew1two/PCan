@@ -17,7 +17,10 @@ $router->add('/', array(
     'action' => 'index',
 ));
 
-
+$router->add('/myaccount/{any}',array(
+    'controller' => 'myaccount',
+    'action' => 'edit',
+));
 
 $router->add('/index',array(
     'controller' => 'index',
@@ -60,6 +63,12 @@ $router->add('/users/delete/{id}', array(
     'controller' => 'users',
     'action' => 'delete',
 ));
+/*
+$router->add('/blog/upload', array(
+    'controller' => 'blog',
+    'action' => 'upload',
+));
+*/
 $router->add('/blog/edit/{id}', array(
     'controller' => 'blog',
     'action' => 'edit',

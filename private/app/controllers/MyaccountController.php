@@ -20,49 +20,41 @@ use Pcan\Models\PasswordChanges;
 class MyaccountController extends ControllerBase
 {
     //put your code here
+    public $identity;
+    public $id;
     
-      
-    public function indexAction($redirect)
+    public function getId()
     {
-        
-            if (!is_null($redirect))
-            {
-                $this->view->setRenderLevel(View::LEVEL_NO_RENDER);
-                return $this->response->redirect("myaccount/index");
-            }       
-            else {
+        if (!isset($this->id))
+        {
                 $identity = $this->auth->getIdentity();
                 if (!is_array($identity))
                 {             
                     return;
                 }
-                return $this->editAction($identity['id']);
-                
-            }
+                $this->id = $identity['id'];
+        }  
+        return $this->id;
+    }
+    public function indexAction()
+    {
+
+        return $this->editAction();
+
     }
     /**
      * Edits own user details with restrictions
      *
      * @param string $id
      */
-    public function editAction($id)
+    public function editAction()
     {
-        if (is_null($id))
-        {
-                $identity = $this->auth->getIdentity();
-                if (!is_array($identity))
-                {             
-                    $this->flash->error("Current user unknown");
-                    return;
-                }
-                $id = $identity['id'];
-        }
-        $user = Users::findFirstById($id);
+        $id = $this->getId();
+        $user = isset($id) ? Users::findFirstById($id) : null;
         if (!$user) {
+            $this->view->pick("index/route404");
             $this->flash->error("User was not found");
-            return $this->dispatcher->forward(array(
-                'action' => 'index'
-            ));
+            return;
         }
 
         if ($this->request->isPost()) {

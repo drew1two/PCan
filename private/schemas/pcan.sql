@@ -358,13 +358,12 @@ DROP TABLE IF EXISTS `pcan`.`meta` ;
 
 CREATE TABLE IF NOT EXISTS `pcan`.`meta` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `attr_value` VARCHAR(30) NOT NULL,
-  `attr_name` VARCHAR(15) NOT NULL,
-  `content_type` VARCHAR(45) NULL,
+  `meta_name` VARCHAR(20) NOT NULL,
+  `template` VARCHAR(80) NULL,
+  `data_limit` INT NULL,
   `auto_filled` TINYINT(1) NULL DEFAULT 0,
   PRIMARY KEY (`id`),
-  UNIQUE INDEX `id_meta_UNIQUE` (`id` ASC),
-  UNIQUE INDEX `keyvalue_UNIQUE` (`attr_value` ASC))
+  UNIQUE INDEX `id_meta_UNIQUE` (`id` ASC))
 ENGINE = InnoDB
 AUTO_INCREMENT = 1;
 
@@ -430,6 +429,30 @@ CREATE TABLE IF NOT EXISTS `pcan`.`contact` (
   `body` TEXT NULL,
   PRIMARY KEY (`id`),
   UNIQUE INDEX `id_UNIQUE` (`id` ASC))
+ENGINE = InnoDB
+AUTO_INCREMENT = 1;
+
+
+-- -----------------------------------------------------
+-- Table `pcan`.`file_upload`
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS `pcan`.`file_upload` ;
+
+CREATE TABLE IF NOT EXISTS `pcan`.`file_upload` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `name` VARCHAR(255) NOT NULL,
+  `path` VARCHAR(255) NOT NULL,
+  `mime_type` VARCHAR(30) NULL,
+  `date_upload` DATETIME NULL,
+  `blog_id` INT UNSIGNED NULL,
+  `file_size` INT UNSIGNED NULL,
+  PRIMARY KEY (`id`),
+  INDEX `fk_file_upload_1_idx` (`blog_id` ASC),
+  CONSTRAINT `fk_file_upload_1`
+    FOREIGN KEY (`blog_id`)
+    REFERENCES `pcan`.`blog` (`id`)
+    ON DELETE SET NULL
+    ON UPDATE NO ACTION)
 ENGINE = InnoDB
 AUTO_INCREMENT = 1;
 

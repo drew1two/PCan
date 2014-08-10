@@ -32,6 +32,7 @@ class Acl extends Component
      */
     private $privateResources = array(
         'myaccount' => array (
+            'index',
             'edit'
         ),
         'comment' => array(
@@ -70,6 +71,8 @@ class Acl extends Component
             'delete',
             'create',
             'comment',
+            'upload',
+            'deleteFile',
         ),
         'meta' => array(
             'new',

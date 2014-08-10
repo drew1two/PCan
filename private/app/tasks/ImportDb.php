@@ -14,13 +14,20 @@ class ImportDb extends \Phalcon\CLI\Task {
     public $importDb;
     public $config;
     private $blogDb;
-
+    
+    public function getConfig()
+    {
+        if (!isset($this->config))
+        {
+            $di = $this->getDI();
+            $this->config = $di->get('config');
+        }
+        return $this->config;
+    }
     public function getDb() {
         if (isset($this->blogDb))
             return $this->blogDb;
-
-        $di = $this->getDI();
-        $this->config = $di->get('config');
+        $config = $this->getConfig();
         $exportDb = get_object_vars($this->config->database);
 
         $this->blogDb = new DbAdapter($exportDb);
@@ -28,19 +35,8 @@ class ImportDb extends \Phalcon\CLI\Task {
     }
 
     public function newImportDb() {
-        $info = [
-            'adapter' => 'Mysql',
-            'host' => 'localhost',
-        ];
-        if ($this->config->application->publicUrl !== 'localhost.localdomain') {
-            $info['username'] = 'parracan_w1sa';
-            $info['password'] = 'AVdbtPi3QZ';
-            $info['dbname'] = 'parracan_w1';
-        } else {
-            $info['username'] = 'dpcan_w1sa';
-            $info['password'] = 'LeardF0rr3$t';
-            $info['dbname'] = 'dpcan';
-        }
+        $config = $this->getConfig();
+        $info = get_object_vars($this->config->importdb);
         return new DbAdapter($info);
     }
 

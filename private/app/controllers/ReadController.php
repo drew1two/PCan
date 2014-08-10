@@ -26,7 +26,7 @@ class ReadController extends ControllerBase
     private function getMetaTags($id)
     {
              // setup metatag info
-        $sql = "select m.id, m.attr_value, m.attr_name, m.content_type, b.content"
+        $sql = "select m.id, m.meta_name, m.template, m.data_limit, b.content"
                 . " from meta m"
                 . " left join blog_meta b on b.meta_id = m.id"
                 . " and b.blog_id = " . $id;
@@ -39,7 +39,15 @@ class ReadController extends ControllerBase
         $stmt->execute();
         $stmt->setFetchMode(\Phalcon\Db::FETCH_OBJ);    
         $results = $stmt->fetchAll();
-        return $results;  
+        if ($results && count($results) > 0)
+        {
+            $meta_tags = array();
+            foreach($results as $row)
+            {
+                $meta_tags[] = str_replace("{}",$row->comment,$row->template);
+            }
+            return $meta_tags;
+        }
     }   
 
     /**
@@ -271,7 +279,7 @@ class ReadController extends ControllerBase
             $comment->user_id = $user_id;
         }
         
-        $this->view->meta = $this->getMetaTags($id);
+        $this->view->metaloaf = $this->getMetaTags($id);
         $this->view->user_id = $user_id;
         $comment->blog_id = $id;
         $this->view->form = new CommentForm($comment, array(

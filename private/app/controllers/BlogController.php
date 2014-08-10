@@ -1,78 +1,72 @@
 <?php
+
 namespace Pcan\Controllers;
 
 use Phalcon\Mvc\Model\Criteria;
+use Phalcon\Mvc\View;
 use Phalcon\Paginator\Adapter\Model as Paginator;
 use Phalcon\Db\Adaptor\Pdo\MySql;
 use Phalcon\Db\Adaptor\Pdo;
 use Phalcon\Db;
+use Phalcon\Http\Response as Response;
 
 use Pcan\Models\BlogComment;
 use Pcan\Forms\CommentForm;
 use Pcan\Models\Blog;
-
+use Pcan\Models\FileUpload;
 use Pcan\Models\PageInfo as PageInfo;
+
 
 require_once __DIR__ . ' /../library/Text/Html.php';
 
+class BlogController extends ControllerBase {
 
-class BlogController extends ControllerBase
-{
     public $posted;
     private $connect;
-    
-    private function getDb()
-    {
-        if (is_null($this->connect))
-        {
+
+    private function getDb() {
+        if (is_null($this->connect)) {
             $di = \Phalcon\DI::getDefault();
             $this->connect = $di->get('db');
             $this->connect->connect();
         }
         return $this->connect;
     }
+
     /**
      * Make title_clean unique by appending more characters.
      * Do not need to do this if title has not changed.
      * @param type $base_name
      * @param type $existingid
      */
-    private function unique_title_url($blog,$slug)
-    {
+    private function unique_title_url($blog, $slug) {
         $sql = 'select count(*) from blog where title_clean = :tc';
         $isUpdate = !is_null($blog->id) && ($blog->id > 0);
-        
-        if ($isUpdate)
-        {
-            // exclude self from search, in case of no change?
+
+        if ($isUpdate) {
+// exclude self from search, in case of no change?
             $sql .= ' and id <> :bid';
         }
         $db = $this->getDb();
         $stmt = $db->prepare($sql);
         $tryCount = 0;
-        
+
         $candidate = $slug;
         $date = new \DateTime($blog->date_published);
-        if ($isUpdate)
-        {
+        if ($isUpdate) {
             $stmt->bindValue(':bid', $blog->id, \PDO::PARAM_INT);
         }
-        while ($tryCount < 5)
-        {
-            $stmt->bindValue(':tc',$candidate, \PDO::PARAM_STR);
+        while ($tryCount < 5) {
+            $stmt->bindValue(':tc', $candidate, \PDO::PARAM_STR);
             $stmt->execute();
             $count_star = $stmt->fetch(\PDO::FETCH_NUM);
-            if ($count_star[0] == 0)
-            {
+            if ($count_star[0] == 0) {
                 break;
-            }
-            else {
-                if (tryCount == 0)
-                {
-                    $slug .= '-' . date('Ymd',$date->getTimestamp());
+            } else {
+                if (tryCount == 0) {
+                    $slug .= '-' . date('Ymd', $date->getTimestamp());
                     $candidate = $slug;
-                }
-                else {
+                } else {
                     $candidate = $slug . '-' . $tryCount;
                 }
             }
@@ -80,91 +74,186 @@ class BlogController extends ControllerBase
         }
         $blog->title_clean = $candidate;
     }
-    private function getMetaTags($id)
-    {
-             // setup metatag info
-        $sql = "select m.id, m.attr_value, m.attr_name, m.content_type, b.content, b.blog_id"
+
+    private function getMetaTags($id) {
+// setup metatag info
+        $sql = "select m.id, m.meta_name, m.template, m.data_limit, b.content, b.blog_id"
                 . " from meta m"
                 . " left join blog_meta b on b.meta_id = m.id"
                 . " and b.blog_id = " . $id;
-        // form with m_attr_value as labels, content as edit text.
+// form with m_attr_value as labels, content as edit text.
         $db = $this->getDb();
         $stmt = $db->prepare($sql);
         $stmt->execute();
-        $stmt->setFetchMode(\Phalcon\Db::FETCH_OBJ);    
+        $stmt->setFetchMode(\Phalcon\Db::FETCH_OBJ);
         $results = $stmt->fetchAll();
-        return $results;  
+        return $results;
     }
-    
-    public function initialize()
-    {
+            
+    public function initialize() {
         parent::initialize();
         $this->posted = false;
-        
     }
 
-    public function indexAction()
+    public function deleteFileAction()
     {
-         return $this->pageAction();
+        $request =$this->request;
+        
+        
+        if ($request->isPost() && $request->isAjax())
+        {
+            
+            $file_id = $request->getPost('id','int');
+            $blog_id = $request->getPost('blogid','int');
+            if (isset($file_id))
+            {
+                $this->view->setRenderLevel(View::LEVEL_ACTION_VIEW);
+                $this->view->pick("blog/upload");
+                $di = \Phalcon\DI::getDefault();
+                $config = $di->get('config');
+                $upfile = FileUpload::findFirst(array(
+                    "conditions" => "id=?0",
+                    "bind" => array(0 => $file_id)
+                ));
+                
+                if ($upfile)
+                {
+                    $path = $config->application->webDir . $upfile->path . $upfile->name;
+                    $wasDeleted = false;
+                    if (is_file($path))
+                    {
+                        $wasDeleted = unlink($path);
+                    }
+                    else if (!file_exists($path)){
+                        $wasDeleted = true;
+                    }
+                    if ($wasDeleted)
+                    {
+                        $upfile->delete();
+                    }
+                    $this->view->upfiles = FileUpload::find(array(
+                        "conditions" => "blog_id = ?1",
+                        "bind" => array(1 => $blog_id),
+                    )); 
+                    
+                    $this->view->replylist = ['Deleted file ' . $upfile->name];
+                }
+            }
+        }
     }
+    public function uploadAction() {
+            //$response->setHeader("Content-Type", "text/plain");
+        $this->view->setRenderLevel(View::LEVEL_ACTION_VIEW);
+        $reply = array();
+        $blog_id = $this->request->getPost('blogid','int');
+        if ($this->request->hasFiles() == true) {
+            $uploads = $this->request->getUploadedFiles();
+            $isUploaded = false;
+//do a loop to handle each file individually
+            
+            // get destination
+            $dest_dir = $this->request->getPost('up_dest');
+            $dest_dir .= '/upload/';
+            
+            foreach ($uploads as $upload) {
+//define a “unique” name and a path to where our file must go
+                // $path = 'temp/' . md5(uniqid(rand(), true)) . '-' . strtolower($upload->getname());
+                $fname = strtolower($upload->getname());
+                $path = $dest_dir . $fname;
+#move the file and simultaneously check if everything was ok
+                $mimetype = $upload->getRealType();
+                $filesize = $upload->getSize();
+                $isUploaded = ($upload->moveTo($path)) ?  true : false;
+                
+                if ($isUploaded)
+                {
+                    $reply[] = 'paste url: /' . $path;
+                    $rupload = new FileUpload();
+                    $rupload->path = $dest_dir;
+                    $rupload->name = $fname;
+                    $rupload->date_upload = date('Y-m-d H:i:s');
+                    $rupload->file_size = $filesize;
+                    $rupload->blog_id = $blog_id;
+                    $rupload->mime_type = $mimetype;
+                    
+                    $rupload->Save();
+                }
+                else {
+                    $reply[] = '_failed_: ' . $fname;
+                }
+                
+            }
+            
+        } else {
+           $reply = ['No files were transferred']; 
+        }
+        $fileset = FileUpload::find(array(
+                    "conditions" => "blog_id = ?1",
+                    "bind" => array(1 => $blog_id),
+                ));
+        $this->view->upfiles = $fileset;
+        
+        $this->view->replylist = $reply;
+    }
+
+    public function indexAction() {
+        return $this->pageAction();
+    }
+
     /**
      * Index action
      */
-    public function pageAction()
-    { 
+    public function pageAction() {
         $numberPage = $this->request->getQuery("page", "int");
-        
-        if (is_null($numberPage))
-        {
+
+        if (is_null($numberPage)) {
             $numberPage = 1;
+        } else {
+            $numberPage = intval($numberPage);
         }
-        else {
-             $numberPage = intval($numberPage);
-        }
-            
+
         $grabsize = 16;
-        $start = ($numberPage-1) * $grabsize;
-        //SQL_CALC_FOUND_ROWS
+        $start = ($numberPage - 1) * $grabsize;
+//SQL_CALC_FOUND_ROWS
         $sql = "select  SQL_CALC_FOUND_ROWS b.*, u.name as author_name from blog b"
                 . " left join users u on u.id = b.author_id"
                 . " order by b.date_published desc"
-                . " limit " . $start . ", " . $grabsize ;
-         
+                . " limit " . $start . ", " . $grabsize;
+
         $db = $this->getDb();
-        
+
         $stmt = $db->query($sql);
-        $stmt->setFetchMode(\Phalcon\Db::FETCH_OBJ);    
+        $stmt->setFetchMode(\Phalcon\Db::FETCH_OBJ);
         $results = $stmt->fetchAll();
-    
+
         $cquery = $db->query("SELECT FOUND_ROWS()");
         $cquery->setFetchMode(\Phalcon\Db::FETCH_NUM);
         $maxrows = $cquery->fetch();
-        
+
         $paginator = new PageInfo($numberPage, $grabsize, $results, $maxrows[0]);
         /*
-        ob_clean();
-        var_dump($paginator);
-        $s = ob_get_clean();
-        $this->flash->notice($s);   */
-        $this->view->page = $paginator; 
+          ob_clean();
+          var_dump($paginator);
+          $s = ob_get_clean();
+          $this->flash->notice($s); */
+        $this->view->page = $paginator;
         $this->view->user_id = null;
-        $canEdit = array("Editor","Administrator");
+        $canEdit = array("Editor", "Administrator");
         $identity = $this->session->get('auth-identity');
         if (isset($identity) && isset($identity['id'])) {
             $this->view->user_id = $identity['id'];
             $profile = $identity['profile'];
-            $this->view->isEditor = in_array($profile,$canEdit);
+            $this->view->isEditor = in_array($profile, $canEdit);
         }
     }
 
     /**
      * Searches for blog
      */
-    public function searchAction()
-    {
+    public function searchAction() {
 
         $numberPage = 1;
-        
+
         if ($this->request->isPost()) {
             $query = Criteria::fromInput($this->di, "\Pcan\Models\Blog", $this->request->getPost());
             $this->persistent->parameters = $query->getParams();
@@ -183,67 +272,64 @@ class BlogController extends ControllerBase
             $this->flash->notice("The search did not find any blog");
 
             return $this->dispatcher->forward(array(
-                "controller" => "blog",
-                "action" => "index"
+                        "controller" => "blog",
+                        "action" => "index"
             ));
         }
 
         $paginator = new Paginator(array(
             "data" => $blog,
-            "limit"=> 10,
+            "limit" => 10,
             "page" => $numberPage
         ));
 
         $this->view->page = $paginator->getPaginate();
     }
+
     /* return true any value at all came back from checkbox */
-    private function int_bool($pvar)
-    {
+
+    private function int_bool($pvar) {
         if (is_null($this->request->getPost($pvar)))
             return 0;
         else
             return 1;
     }
-    
-    private function checked_bool($pvar)
-    {
+
+    private function checked_bool($pvar) {
         $chk = $this->int_bool($pvar);
-        if ($chk > 0) 
+        if ($chk > 0)
             return "checked";
         else
             return;
     }
+
     /**
      * Displayes the creation form
      */
-    public function newAction()
-    {
+    public function newAction() {
         if (!$this->request->isPost()) {
-            // default to new.volt
+// default to new.volt
             return;
         }
 
         $blog = new Blog();
 
-        //$blog->id = $this->request->getPost("id");
-         
-        // default to current user
+//$blog->id = $this->request->getPost("id");
+// default to current user
         $identity = $this->session->get('auth-identity');
         if (isset($identity) && isset($identity['id'])) {
             $blog->author_id = $identity['id'];
-        }
-        else {
+        } else {
             $this->flash->error("No logged in identity");
             return;
-            
         }
         $blog->views = 0;
-        
-        // default to current date
+
+// default to current date
         $blog->date_published = date('Y-m-d H:i:s');
         $blog->date_updated = date('Y-m-d H:i:s');
         $this->setBlogFromPost($blog);
-       
+
         if (!$blog->save()) {
             foreach ($blog->getMessages() as $message) {
                 $this->flash->error($message);
@@ -255,43 +341,39 @@ class BlogController extends ControllerBase
         $this->flash->success("blog was created successfully");
 
         return $this->dispatcher->forward(array(
-            "controller" => "blog",
-            "action" => "index"
+                    "controller" => "blog",
+                    "action" => "index"
         ));
-
     }
-    // standard updates from edit or new.
-    private function setBlogFromPost(&$blog)
-    {
-        $newTitle = $this->request->getPost('title','striptags');
+
+// standard updates from edit or new.
+    private function setBlogFromPost(&$blog) {
+        $newTitle = $this->request->getPost('title', 'striptags');
         $titleChanged = ($blog->title !== $newTitle);
         $blog->title = $newTitle;
         $newUrl = '';
         $autoUrl = True;
-        if (!is_null($blog->id))
-        {
-            $newUrl = $this->request->getPost('title_clean','striptags');
-            
-            if ($newUrl != $blog->title_clean)
-            {
-                $this->unique_title_url($blog,$newUrl); 
+        if (!is_null($blog->id)) {
+            $newUrl = $this->request->getPost('title_clean', 'striptags');
+
+            if ($newUrl != $blog->title_clean) {
+                $this->unique_title_url($blog, $newUrl);
                 $autoUrl = False;
             }
         }
-        
-        if ($titleChanged && $autoUrl)
-        {
-            $this->unique_title_url($blog,url_slug($blog->title));   
+
+        if ($titleChanged && $autoUrl) {
+            $this->unique_title_url($blog, url_slug($blog->title));
         }
         $blog->article = $this->request->getPost("article");
-       
+
         $blog->featured = $this->int_bool('featured');
         $blog->enabled = $this->int_bool('enabled');
-        $blog->comments = $this->int_bool('comments'); 
+        $blog->comments = $this->int_bool('comments');
         $blog->date_updated = date('Y-m-d H:i:s');
     }
-    private function setTagFromBlog($blog)
-    {
+
+    private function setTagFromBlog($blog) {
         $this->view->id = $blog->id;
         $this->tag->setDefault("id", $blog->id);
         $this->tag->setDefault("title", $blog->title);
@@ -300,40 +382,37 @@ class BlogController extends ControllerBase
         $this->tag->setDefault("author_id", $blog->author_id);
         $this->tag->setDefault("date_published", $blog->date_published);
         $this->tag->setDefault("date_updated", $blog->date_updated);
-        $this->tag->setDefault("views", $blog->views);        
-        // Checkbox field needs a default
-        $this->tag->setDefault("featured", 1);  
-        $this->tag->setDefault("enabled", 1);  
+// Checkbox field needs a default
+        $this->tag->setDefault("featured", 1);
+        $this->tag->setDefault("enabled", 1);
         $this->tag->setDefault("comments", 1);
     }
-    
-    private function getView($id)
-    {
+
+    private function getView($id) {
         $blog = Blog::findFirstByid($id);
         if (!$blog) {
             $this->flash->error("blog was not found");
 
             return $this->dispatcher->forward(array(
-                "controller" => "blog",
-                "action" => "index"
+                        "controller" => "blog",
+                        "action" => "index"
             ));
         }
         $this->setTagFromBlog($blog);
         $this->view->blog = $blog;
     }
+
     /**
      * Make an edit form for blog $id
      * @param type $id
      * @return type null
      */
-    private function editForm($id)
-    {
+    private function editForm($id) {
         $identity = $this->session->get('auth-identity');
         if (isset($identity) && isset($identity['id'])) {
-           $user_id = $identity['id'];
-        }
-        else {
-           $user_id = null;
+            $user_id = $identity['id'];
+        } else {
+            $user_id = null;
         }
         $this->getView($id);
         $blog = $this->view->blog;
@@ -342,155 +421,158 @@ class BlogController extends ControllerBase
 
         $isApprover = in_array($profile, $canEdit) && ($blog->author_id !== $user_id);
         $this->view->isApprover = $isApprover;
-        if (!$canEdit)
-        {
-           $this->response->redirect("blog/comment/".$id);
-           return;
-        }
-        // setup metatag info
 
-        $this->view->metatags = $this->getMetaTags($id);       
+        if (!$canEdit) {
+            $this->response->redirect("blog/comment/" . $id);
+            return;
+        }
+
+        $this->view->title = 'Edit ' . $blog->title;
+// setup metatag info
+
+        $this->view->metatags = $this->getMetaTags($id);
+        
+        $fileset = FileUpload::find(array(
+                    "conditions" => "blog_id = ?1",
+                    "bind" => array(1 => $id),
+                ));
+
+        $this->view->upfiles = $fileset;
     }
+
     /**
      * Edits a blog
      *
      * @param string $id
      */
-    public function editAction($id)
-    {
+    public function editAction($id) {
         if ($this->posted)
             return true;
-        
+
         if (!$this->request->isPost()) {
             $this->editForm($id);
-        }
-        else {
+        } else {
             return $this->updatePost($id);
         }
     }
+
     /**
      * View a blog
      *
      * @param string $id
      */
-    public function commentAction($id)
-    {
-       $id = $this->dispatcher->getParam("id");
-       //$logger =  \Phalcon\DI::getDefault()->get('logger');
-       //$logger->log("Read:indexAction " . $id, \Phalcon\Logger::DEBUG);
-       
-       if (is_null($id))
-       {
-           //$logger->log("null id ", \Phalcon\Logger::DEBUG);
-           $this->searchAction();
-           return;
-       }
-       $bid = intval($id);
-       
-       
-       $this->view->blog = Blog::findFirstByid($bid);
+    public function commentAction() {
+        $id = $this->dispatcher->getParam("id");
+//$logger =  \Phalcon\DI::getDefault()->get('logger');
+//$logger->log("Read:indexAction " . $id, \Phalcon\Logger::DEBUG);
 
-       // comments listing pages
-       
-        $numberPage = $this->request->getQuery("page", "int");
-        
-        if (is_null($qnumber))
-        {
-            $numberPage = 1;
+        if (is_null($id)) {
+//$logger->log("null id ", \Phalcon\Logger::DEBUG);
+            $this->searchAction();
+            return;
         }
-        else {
+        $bid = intval($id);
+
+
+        $this->view->blog = Blog::findFirstByid($bid);
+
+// comments listing pages
+
+        $numberPage = $this->request->getQuery("page", "int");
+
+        if (is_null($numberPage)) {
+            $numberPage = 1;
+        } else {
             $numberPage = intval($numberPage);
         }
         $grabsize = 16;
 
-  
-        $paginator = BlogComment::getComments($numberPage,$grabsize,$bid);
-        
-        // set  up some fields
-        $this->view->page = $paginator; 
+
+        $paginator = BlogComment::getComments($numberPage, $grabsize, $bid);
+
+// set  up some fields
+        $this->view->page = $paginator;
         $comment = new BlogComment();
-                // default to current user
+// default to current user
         $identity = $this->session->get('auth-identity');
         $user_id = null;
         if (isset($identity) && isset($identity['id'])) {
             $user_id = $identity['id'];
             $comment->user_id = $user_id;
         }
-        
+
         $this->view->user_id = $user_id;
         $comment->blog_id = $id;
         $this->view->form = new CommentForm($comment, array(
             'edit' => true
         ));
     }
+
     /**
      * Creates a new blog
      */
-    public function createAction()
-    {
+    public function createAction() {
 
         if (!$this->request->isPost()) {
             return $this->dispatcher->forward(array(
-                "controller" => "blog",
-                "action" => "index"
+                        "controller" => "blog",
+                        "action" => "index"
             ));
         }
 
         $blog = new Blog();
 
         $blog->id = $this->request->getPost("id");
-        
-        setBlogFromPost($blog);  
-        
+
+        setBlogFromPost($blog);
+
         $blog->author_id = $this->request->getPost("author_id");
         $blog->date_published = date('Y-m-d H:i:s');
         $blog->views = $this->request->getPost("views");
-              
+
         if (!$blog->save()) {
             foreach ($blog->getMessages() as $message) {
                 $this->flash->error($message);
             }
 
             return $this->dispatcher->forward(array(
-                "controller" => "blog",
-                "action" => "new"
+                        "controller" => "blog",
+                        "action" => "new"
             ));
         }
 
         $this->flash->success("blog was created successfully");
         $this->posted = true;
         return $this->dispatcher->forward(array(
-            "controller" => "blog",
-            "action" => "edit"
+                    "controller" => "blog",
+                    "action" => "edit"
         ));
-
     }
 
     /**
      * Saves a blog edited
      *
      */
-    public function updatePost($id)
-    {
+    public function updatePost($id) {
 
         if (!$this->request->isPost()) {
             return $this->dispatcher->forward(array(
-                "controller" => "blog",
-                "action" => "index"
+                        "controller" => "blog",
+                        "action" => "index"
             ));
         }
-        // check match?
+// check match?
         $check_id = $this->request->getPost("id");
         $blog = Blog::findFirstByid($id);
         if (!$blog) {
             $this->flash->error("blog does not exist " . $id);
 
             return $this->dispatcher->forward(array(
-                "controller" => "blog",
-                "action" => "index"
+                        "controller" => "blog",
+                        "action" => "index"
             ));
         }
-        // set updatable things
+// set updatable things
         $this->setBlogFromPost($blog);
 
         if (!$blog->save()) {
@@ -500,43 +582,36 @@ class BlogController extends ControllerBase
             }
 
             return $this->dispatcher->forward(array(
-                "controller" => "blog",
-                "action" => "edit",
-                "params" => array($blog->id)
+                        "controller" => "blog",
+                        "action" => "edit",
+                        "params" => array($blog->id)
             ));
         }
         $metatags = BlogController::getMetaTags($id);
         $db = $this->getDb();
         $inTrans = false;
-        foreach($metatags as $mtag)
-        {
-            // key = meta.#id.value
-            $key = 'metatag-'. $mtag->id . '-' . $mtag->attr_value;
-            
-            $content = $this->request->getPost($key,'striptags');
-            
-            if (is_null($content) || empty($content))
-            {
-                // link content record needs deleting ? 
-                if (!is_null($mtag->blog_id))
-                {
-                    if (!$inTrans)
-                    {
+        foreach ($metatags as $mtag) {
+// key = metatag-#id
+            $key = 'metatag-' . $mtag->id;
+
+            $content = $this->request->getPost($key, 'striptags');
+
+            if (is_null($content) || empty($content)) {
+// link content record needs deleting ? 
+                if (!is_null($mtag->blog_id)) {
+                    if (!$inTrans) {
                         $db->begin();
                         $inTrans = True;
-                        
                     }
                     $sql = "delete from blog_meta where blog_id = :blogid"
                             . " and meta_id = :metaid";
                     $stmt = $db->prepare($sql);
                     $stmt->bindValue(':blogid', (int) $blog->id, \PDO::PARAM_INT);
-                    $stmt->bindValue(':metaid', (int) $mtag->id, \PDO::PARAM_INT);  
+                    $stmt->bindValue(':metaid', (int) $mtag->id, \PDO::PARAM_INT);
                     $stmt->execute();
                 }
-            }
-            else {
-                if (!$inTrans)
-                {
+            } else {
+                if (!$inTrans) {
                     $db->begin();
                     $inTrans = True;
                 }
@@ -548,35 +623,30 @@ class BlogController extends ControllerBase
                 $stmt->bindValue(':content', $content, \PDO::PARAM_STR);
                 $stmt->execute();
             }
-            
         }
-        if ($inTrans)
-        {
-             $db->commit();
+        if ($inTrans) {
+            $db->commit();
         }
 
-        // get the metatag info from the POST
-        // reconstruct the view
+// get the metatag info from the POST
+// reconstruct the view
         $this->editForm($id);
-
     }
-
 
     /**
      * Deletes a blog
      *
      * @param string $id
      */
-    public function deleteAction($id)
-    {
+    public function deleteAction($id) {
 
         $blog = Blog::findFirstByid($id);
         if (!$blog) {
             $this->flash->error("blog was not found");
 
             return $this->dispatcher->forward(array(
-                "controller" => "blog",
-                "action" => "index"
+                        "controller" => "blog",
+                        "action" => "index"
             ));
         }
 
@@ -587,16 +657,16 @@ class BlogController extends ControllerBase
             }
 
             return $this->dispatcher->forward(array(
-                "controller" => "blog",
-                "action" => "search"
+                        "controller" => "blog",
+                        "action" => "search"
             ));
         }
 
         $this->flash->success("blog was deleted successfully");
 
         return $this->dispatcher->forward(array(
-            "controller" => "blog",
-            "action" => "index"
+                    "controller" => "blog",
+                    "action" => "index"
         ));
     }
 

@@ -15,7 +15,11 @@ class InitTask extends \Phalcon\CLI\Task {
     public function initAction() {
         echo "\nThis is the default task and the default action \n";
     }
-
+    /**
+     * want : name, data_limit, template (will be quoted on cmdline), 
+     * @param array $params
+     * @return type
+     */
     public function metatagAction(array $params)
     {
         $len = count($params);
@@ -24,9 +28,10 @@ class InitTask extends \Phalcon\CLI\Task {
             echo "metatag attr_value attr_name comment_type";
             return;
         }  
-        $attr_value = $params[0];
-        $attr_name = $params[1];
-        $content_type = $params[2];
+        $meta_name = $params[0];
+        $data_limit = $params[1];
+        $template = $params[2];
+        
         $di = Phalcon\DI::getDefault();
         $config = $di->get('config');
         
@@ -36,13 +41,13 @@ class InitTask extends \Phalcon\CLI\Task {
 
             $connect = new DbAdapter($db);
             $connect->begin();
-            $sql = "insert into meta (attr_value, attr_name, content_type)"
-                    . " values (:attr_value, :attr_name, :content_type)";
+            $sql = "insert into meta (meta_name, template, data_limit)"
+                    . " values (:meta_name, :template, :data_limit)";
             
             $stm = $connect->prepare($sql);
-            $stm->bindParam(':attr_value', $attr_value, PDO::PARAM_STR);
-            $stm->bindParam(':attr_name', $attr_name, PDO::PARAM_STR);
-            $stm->bindParam(':content_type', $content_type, PDO::PARAM_STR);
+            $stm->bindParam(':meta_name', $meta_name, PDO::PARAM_STR);
+            $stm->bindParam(':template', $template, PDO::PARAM_STR);
+            $stm->bindParam(':data_limit', $data_limit, PDO::PARAM_STR);
             
             $stm->execute();  
             $connect->commit();

@@ -18,19 +18,18 @@ class Meta extends \Phalcon\Mvc\Model
      *
      * @var string
      */
-    public $attr_value;
+    public $meta_name;
      
     /**
      *
      * @var string
      */
-    public $attr_name;
-     
+    public $template;
     /**
      *
-     * @var string
+     * @var int
      */
-    public $content_type;
+    public $data_limit;
      
     /**
      *

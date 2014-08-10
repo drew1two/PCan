@@ -54,9 +54,9 @@ class MetaForm extends Form {
         $id = new Hidden('id');
         $this->add($id);
 
-        $name = new Text('attr_name', array(
+        $name = new Text('meta_name', array(
             'placeholder' => 'Name',
-           'size' => 15,
+           'size' => 20,
         ));
 
         $name->addValidators(array(
@@ -67,9 +67,9 @@ class MetaForm extends Form {
 
         $this->add($name);
 
-        $atvalue = new Text('attr_value', array(
-            'placeholder' => 'Value',
-            'size' => 30,
+        $atvalue = new Text('template', array(
+            'placeholder' => 'Template',
+            'size' => 80,
 
         ));
 
@@ -81,9 +81,9 @@ class MetaForm extends Form {
 
         $this->add($atvalue);
 
-        $content = new Text('content_type', array(
-            'placeholder' => 'Content Type',
-            'size' => 45,
+        $content = new Text('data_limit', array(
+            'placeholder' => 'Size Limit',
+            'size' => 10,
 
         ));
         $this->add($content);

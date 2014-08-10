@@ -17,18 +17,23 @@
 <table class="table table-bordered table-striped">
     <thead>
         <tr>
-            <th style="width:65%;">Value</th>
-            <th style="width:20%;">Attribute</th>
-            <th style="width:15%;">Content</th>   
+            <th style="width:20%;">Name</th>
+            <th style="width:65%;">Template</th>
+            <th style="width:15%;">Size Limit</th>
+            <th style="width:15%;">Auto</th> 
          </tr>
     </thead>
 
     <tbody>
     <?php foreach ($page->items as $meta) { ?>
         <tr>
-            <td style="text-align:left"><?php echo $this->tag->linkTo(array("meta/edit?id=" . $meta->id, $meta->attr_value)); ?></td>
-            <td><?php echo $meta->attr_name; ?></td>
-            <td><?php echo $meta->content_type; ?></td>
+            <td style="text-align:left"><?php echo $this->tag->linkTo(array("meta/edit?id=" . $meta->id, $meta->meta_name)); ?></td>
+            <td><?php echo htmlentities($meta->template); ?></td>
+            <td><?php echo $meta->data_limit; ?></td>
+            <td><?php 
+                $howset = isset($meta->auto_filled) && $meta->auto_filled==1 ? "AUTO" : "";
+                echo $howset;
+                ?></td>
         </tr>
     <?php } ?>
     </tbody>

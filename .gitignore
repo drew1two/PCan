@@ -53,9 +53,10 @@
 /public/js/
 /public/img/stories/
 /private/app/config/localhost.php
-/private/app/config/parracan_net.php
 /web/js/
 /web/image/
 /web/.htaccess
 /web/bootstrap-3.2/
 /private/app/log/
+/private/app/config/parracan_net.php
+/private/app/config/secrets.php

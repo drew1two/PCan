@@ -10,13 +10,12 @@ use \Phalcon\Db\Adapter\Pdo\Mysql as DbAdapter;
 use \Phalcon\Db\DbResult\Pdo as DbResult;
 use Pcan\Acl\Acl;
 
-class ProfileTask extends \Phalcon\CLI\Task {
+class UserTask extends \Phalcon\CLI\Task {
     /**
-     * profile set controller action
-     * Allows this profile to access the controller action
+     * main addUser email, name, profile, password
      * @param array $params
      */
-    public function setAction(array $params) {
+    public function addAction(array $params) {
         $len = count($params);
 
         if ($len < 4) {

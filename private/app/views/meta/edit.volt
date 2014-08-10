@@ -9,16 +9,16 @@
     <table class='table table-borderless'>
         <tbody>
             <tr>
-                <td class='rightCell'><label for="attr_value">Attribute Value</label></td>
-                <td class='leftCell'>{{ form.render("attr_value") }}</td>
+                <td class='rightCell'><label for="meta_name">Name</label></td>
+                <td class='leftCell'>{{ form.render("meta_name") }}</td>
             </tr>
             <tr>
-                <td class='rightCell'><label for="attr_name">Attribute Name</label></td>
-                <td class='leftCell'>{{ form.render("attr_name") }}</td>
+                <td class='rightCell'><label for="template">Template</label></td>
+                <td class='leftCell'>{{ form.render("template") }}</td>
             </tr>
             <tr>
-                <td class='rightCell'><label for="content_type">Content Type</label></td>
-                <td class='leftCell'>{{ form.render("content_type") }}</td>
+                <td class='rightCell'><label for="data_limit">Data Size</label></td>
+                <td class='leftCell'>{{ form.render("data_limit") }}</td>
             </tr>
             <tr>
                 <td class='rightCell'><label for="auto_filled">Auto Filled</label></td>
