@@ -1,11 +1,13 @@
 <?php 
     if (isset($upfiles))
     {
-        echo '<table class="table table-condensed"><tbody>';
+        echo '<div class="container">';
+        echo '<table class="table table-condensed table-striped"><tbody>';
         foreach($upfiles as $fup)
         {
             $linkpath = $fup->path . $fup->name;
-            echo '<tr><td>' . $this->tag->linkTo(array($linkpath,$linkpath, 'target' => '_blank'));
+            echo '<tr><td class="leftCell">' . ' /' . $linkpath;
+            echo '</td><td>' .  $this->tag->linkTo(array($linkpath, 'get', 'target' => '_blank') );
             echo '</td><td>' . $fup->date_upload;  
              echo '</td><td>' . $fup->mime_type;  
              echo '</td><td>' . $fup->getSizeStr(); 
@@ -14,6 +16,7 @@
             echo '</td></tr>';
         }
         echo '</tbody></table>';
+        echo '</div>';
     }
     if (isset ($replylist))
     {

@@ -17,10 +17,11 @@ class UsersForm extends Form
 
         // In edition the id is hidden
         $isEdit = isset($options['edit']) && $options['edit'];
-        if ($isMyAccount) {
+        $myid = isset($options['myid']) ? $options['myid'] : null;
+        if (isset($entity) && isset($myid) && ($myid === $entity->id)) {
             $id = new Text('id', array(
                 'readonly'=>'readonly', 'placeholder' => 'Id'
-        ));
+            ));
             //$id = new Hidden('id');
         } else {
             $id = new Text('id');

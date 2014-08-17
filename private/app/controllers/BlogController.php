@@ -63,7 +63,7 @@ class BlogController extends ControllerBase {
             if ($count_star[0] == 0) {
                 break;
             } else {
-                if (tryCount == 0) {
+                if ($tryCount == 0) {
                     $slug .= '-' . date('Ymd', $date->getTimestamp());
                     $candidate = $slug;
                 } else {
@@ -339,11 +339,8 @@ class BlogController extends ControllerBase {
         }
 
         $this->flash->success("blog was created successfully");
+        $this->response->redirect("blog/edit/" . $blog->id);
 
-        return $this->dispatcher->forward(array(
-                    "controller" => "blog",
-                    "action" => "index"
-        ));
     }
 
 // standard updates from edit or new.

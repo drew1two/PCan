@@ -73,7 +73,8 @@ class UsersController extends ControllerBase
         $this->view->user = $user;
 
         $this->view->form = new UsersForm($user, array(
-            'edit' => false
+            'edit' => false,
+            'myid' => $id
         ));       
         
     }
@@ -92,7 +93,10 @@ class UsersController extends ControllerBase
         $grabsize = 16;
         $start = ($numberPage-1) * $grabsize;
         //SQL_CALC_FOUND_ROWS
-        $sql = "select  SQL_CALC_FOUND_ROWS u.* from users u"
+        $sql = "select  SQL_CALC_FOUND_ROWS u.id, profilesId, u.name, u.email,"
+                . " u.banned, u.suspended, u.active, p.name as profile"
+                . " from users u"
+                . " join profiles p on p.id = u.profilesId"
                 . " order by u.name"
                 . " limit " . $start . ", " . $grabsize ;
          

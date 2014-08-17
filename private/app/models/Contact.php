@@ -59,7 +59,7 @@ class Contact extends \Phalcon\Mvc\Model {
                 array(
                     $this->email => $this->name,
                 ),
-                'Julies Catering Contact receipt',
+                'Website Contact',
                 'contactrespond',
                 $templateData
                 );

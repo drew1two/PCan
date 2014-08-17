@@ -30,7 +30,7 @@ return addSecrets(new \Phalcon\Config(array(
         'cryptSalt' => '',
         'loginCaptcha' => false,
         'signupCaptcha' => true,
-        'recaptcha' =>true,
+        'recaptcha' =>false,
         'captchaPublic' =>  "", 
         'captchaPrivate' => "",
         

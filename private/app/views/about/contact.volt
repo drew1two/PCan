@@ -1,7 +1,6 @@
-<?php use \Pcan\Captcha\Recaptcha; ?>
+<?php
 
-{{ content() }}
-
+use \Pcan\Captcha\Recaptcha; ?>
 <div class="container-fluid">
     <div class='table-responsive'>
         <table class="table table-condensed table-bordered">
@@ -38,44 +37,75 @@
 
         </table>
     </div>
-<div class='container'>
-    <form method='post'>
-    <table class="table table-condensed table-bordered">
-        <thead>
-            <tr>
-                <th colspan='2' class='centerCell'><span style='font-weight:bold'>Send Email Direct (or use <a href='mailto:secretary@parracan.org'>secretary@parracan.org</a>)</span></th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td class='rightCell'><label for='name'>Name</label></td>
-                <td class='leftCell'><?php echo $form->render('name');?></td>
-            </tr>
-            <tr>
-                <td class='rightCell'><label for='telephone'>Telephone</label></td>
-                <td class='leftCell'><?php echo $form->render('telephone');?></td>
-            </tr>
-            <tr>
-                <td class='rightCell'><label for='email'>Sender's email</label></td>
-                <td class='leftCell'><?php echo $form->render('email');?></td>
-            </tr>
-            <tr>
-                <td class='rightCell'><label for='body'>Text</label></td>
-                <td class='leftCell'><?php echo $form->render('body');?></td>
-            </tr>
-          <?php
-             $config = Phalcon\DI::getDefault()->get('config');
-             if ($config->application->recaptcha)
-             {
-                 echo Recaptcha::htmlCaptcha($config);      
-             }
-         ?>
-            <tr>
-                <td colspan='2' class='centerCell'><?php echo $this->tag->submitButton(array('Send as Email', 'class' => 'btn btn-default')) ?></td>
-            </tr>
+    {{ content() }}
+    <div class='container'>
+
+        <form method='post'>
+            <table class="table table-condensed table-bordered">
+                <thead>
+                    <tr>
+                        <th colspan='2' class='centerCell'><span style='font-weight:bold'>Send Email Direct (or use <a href='mailto:secretary@parracan.org'>secretary@parracan.org</a>)</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php
+                    if (isset($errors)) {
+                        $msgarray = $errors->filter('name');
+                        if (count($msgarray) > 0) {
+                            foreach ($msgarray as $msg) {
+                                echo '<tr><td colspan="2"><p class="text-danger">' . $msg . '</p></td></tr>';
+                            }
+                        }
+                    }
+                    ?>
+                    <tr>
+                        <td class='rightCell'><label for='name'>Name</label></td>
+                        <td class='leftCell'><?php echo $form->render('name'); ?></td>
+                    </tr>
+                    <tr>
+                        <td class='rightCell'><label for='telephone'>Telephone</label></td>
+                        <td class='leftCell'><?php echo $form->render('telephone'); ?></td>
+                    </tr>
+                    <?php
+                    if (isset($errors)) {
+                        $msgarray = $errors->filter('email');
+                        if (count($msgarray) > 0) {
+                            foreach ($msgarray as $msg) {
+                                echo '<tr><td colspan="2"><p class="text-danger">' . $msg . '</p></td></tr>';
+                            }
+                        }
+                    }
+                    ?>           
+                    <tr>
+                        <td class='rightCell'><label for='email'>Sender's email</label></td>
+                        <td class='leftCell'><?php echo $form->render('email'); ?></td>
+                    </tr>
+<?php
+if (isset($errors)) {
+    $msgarray = $errors->filter('body');
+    if (count($msgarray) > 0) {
+        foreach ($msgarray as $msg) {
+            echo '<tr><td colspan="2"><p class="text-danger">' . $msg . '</p></td></tr>';
+        }
+    }
+}
+?>               
+                    <tr>
+                        <td class='rightCell'><label for='body'>Text</label></td>
+                        <td class='leftCell'><?php echo $form->render('body'); ?></td>
+                    </tr>
+<?php
+$config = Phalcon\DI::getDefault()->get('config');
+if ($config->application->recaptcha) {
+    echo Recaptcha::htmlCaptcha($config);
+}
+?>
+                    <tr>
+                        <td colspan='2' class='centerCell'><?php echo $this->tag->submitButton(array('Send as Email', 'class' => 'btn btn-default')) ?></td>
+                    </tr>
 
 
-        </tbody>
-    </table>
-    </form>
-</div>
+                </tbody>
+            </table>
+        </form>
+    </div>

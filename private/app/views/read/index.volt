@@ -12,15 +12,16 @@
     echo " | " .  $this->tag->linkTo($link.'&page=' . $page->next, 'Next');
     echo " | " .  $this->tag->linkTo($link. '&page=' . $page->last, 'Last');
     echo " | " .  $page->current, "/", $page->last;
+    
 ?>
 </div>
 <div class='container' >
 <table class="table table-bordered table-striped">
     <thead>
         <tr>
-            <th style="width:65%;"><?php echo $this->tag->linkTo($ubase.$orderalt['title'], 'Title') ?></th>
-            <th style="width:20%;"><?php echo $this->tag->linkTo($ubase.$orderalt['author'], 'Author') ?></th>
-            <th style="width:15%;"><?php echo $this->tag->linkTo($ubase.$orderalt['date'], 'Date') ?></th> 
+            <th style="width:65%;"><?php echo $this->tag->linkTo($ubase.$orderalt['title'], 'Title') . $col_arrow['title'] ?></th>
+            <th style="width:20%;"><?php echo $this->tag->linkTo($ubase.$orderalt['author'], 'Author') . $col_arrow['author']  ?></th>
+            <th style="width:15%;"><?php echo $this->tag->linkTo($ubase.$orderalt['date'], 'Date') . $col_arrow['date']  ?></th> 
          </tr>
     </thead>
 

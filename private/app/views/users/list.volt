@@ -1,10 +1,7 @@
 <!-- users/index.volt -->
 <ul class="pager">
-    <li class="previous pull-left">
-        {{ link_to("users/index", "&larr; Go Back") }}
-    </li>
-    <li class="pull-right">
-        {{ link_to("users/create", "Create users", "class": "btn btn-primary") }}
+    <li class="pull-left">
+        {{ link_to("users/create", "Create User", "class": "btn btn-primary") }}
     </li>
 </ul>
 
@@ -36,7 +33,7 @@
             <td>{{ user.id }}</td>
             <td>{{ user.name }}</td>
             <td>{{ user.email }}</td>
-            <td>{{ user.profile.name }}</td>
+            <td>{{ user.profile }}</td>
             <td>{{ user.banned == 'Y' ? 'Yes' : 'No' }}</td>
             <td>{{ user.suspended == 'Y' ? 'Yes' : 'No' }}</td>
             <td>{{ user.active == 'Y' ? 'Yes' : 'No' }}</td>

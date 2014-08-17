@@ -37,8 +37,11 @@ class SessionController extends ControllerBase {
                 // Captcha check new signups first
                 if ($config->application->signupCaptcha)
                 {
-                    if (!Recaptcha::checkCaptcha($request,$config))
-                            throw AuthException("Invalid Captcha: Try again");
+                    $resp = Recaptcha::checkCaptcha($request,$config);
+                    if (!$resp->is_valid)
+                    {
+                        throw new AuthException($resp->error);
+                    }
                 }
                 if ($form->isValid($this->request->getPost()) != false) {
                     
@@ -58,10 +61,19 @@ class SessionController extends ControllerBase {
                                     'action' => 'index'
                         ));
                     }
-                    $this->flash->error($user->getMessages());
+                    $this->flash->notice($user->getMessages());
+                }
+                else {
+                    $collect = '';
+                    foreach($form->getMessages() as $msg)
+                    {
+                        $collect .= $msg->getMessage() . PHP_EOL;
+                    }
+                    
+                    $this->flash->notice($collect);
                 }
             } catch (AuthException $e) {
-                $this->flash->error($e->getMessage());
+                $this->flash->notice($e->getMessage());
             }
         }
 

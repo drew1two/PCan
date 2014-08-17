@@ -11,7 +11,6 @@ $router->add('/:controller/:action', array(
     'action' => 2,
 ));
 
-
 $router->add('/', array(
     'controller' => 'index',
     'action' => 'index',

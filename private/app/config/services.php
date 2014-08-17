@@ -12,7 +12,7 @@ use Phalcon\Flash\Direct as Flash;
 
 use Pcan\Auth\Auth;
 use Pcan\Acl\Acl;
-use Pcan\Mail\Mail;
+use Pcan\Mail\SendMail;
 
 
 Use Phalcon\Logger,
@@ -181,7 +181,7 @@ $di->set('auth', function () {
  * 
  */
 $di->set('mail', function () {
-    return new Mail();
+    return new SendMail();
 });
 
 /**

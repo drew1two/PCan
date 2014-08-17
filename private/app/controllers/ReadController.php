@@ -141,34 +141,53 @@ class ReadController extends ControllerBase
         {
             $orderby = 'date';
         }
-        $order_list = array(  
-            'title-alt' => 'b.title desc',
-            'title' => 'b.title asc',
-            'date-alt' => 'b.date_published asc',
-            'date' => 'b.date_published desc',
-            'author' => 'author_name asc',
-            'author-alt' => 'author_name desc',
-        );
         $alt_list = array(
             'date' => 'date',
             'title' => 'title',
             'author' => 'author',
         );
-        if ($orderby=='title')
+        $col_arrow = array(
+            'date' => '',
+            'title' => '',
+            'author' => '',
+        );  
+        switch($orderby)
         {
-            $alt_list['title'] = 'title-alt';
+            case 'title':
+                $alt_list['title'] = 'title-alt';
+                $col_arrow['title'] = '&#8595;';
+                $order_field = 'b.title asc';
+                break;
+            case 'date':
+                $alt_list['date'] = 'date-alt';
+                $col_arrow['date'] = '&#8595;';
+                $order_field = 'b.date_published asc';
+                break;
+            case 'author':
+                $alt_list['author'] = 'author-alt';
+                $col_arrow['author'] = '&#8595;';
+                $order_field = 'author_name asc, b.date_published desc';
+                break;
+             case 'title-alt':
+                $col_arrow['title'] = '&#8593;';
+                $order_field = 'b.title desc';
+                break;   
+            case 'author-alt':
+                 $col_arrow['author'] = '&#8593;';
+                 $order_field = 'author_name desc,  b.date_published desc';
+                 break;       
+            case 'date-alt':
+            default:
+                $col_arrow['date'] = '&#8593;';
+                $order_field = 'b.date_published desc';
+                break;             
+                
         }
-        else if($orderby=='date')
-        {
-            $alt_list['date'] = 'date-alt';
-        }
-        else if($orderby=='author')
-        {
-            $alt_list['author'] = 'author-alt';        
-        }
+
+        
         $this->view->orderalt = $alt_list;
         $this->view->orderby = $orderby;
-        
+        $this->view->col_arrow = $col_arrow;
         $numberPage = $this->request->getQuery("page", "int");
         if (is_null($numberPage))
         {
@@ -185,7 +204,7 @@ class ReadController extends ControllerBase
                 . " b.title_clean, b.date_published, u.name as author_name from blog b"
                 . " left join users u on u.id = b.author_id"
                 . " where b.enabled = 1"
-                . " order by " . $order_list[$orderby]
+                . " order by " . $order_field
                 . " limit " . $start . ", " . $grabsize ;
          
          

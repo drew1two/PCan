@@ -41,7 +41,7 @@
 			
           <?php
              $config = Phalcon\DI::getDefault()->get('config');
-             if ($config->application->recaptcha)
+             if ($config->application->signupCaptcha)
              {
                  echo Recaptcha::htmlCaptcha($config);      
              }

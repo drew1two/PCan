@@ -34,7 +34,7 @@ class Recaptcha {
         $response = $request->getPost('recaptcha_response_field');
         $address = $request->getClientAddress();
         $resp = recaptcha_check_answer($config->application->captchaPrivate, $address, $challenge, $response);
-        return $resp->is_valid;
+        return $resp;
     }
 
 }
